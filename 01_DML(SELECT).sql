@@ -86,3 +86,14 @@ FROM EMPLOYEE;
 SELECT EMP_ID, EMP_NAME, SALARY, '원' AS 단위
 FROM EMPLOYEE;
 
+-- DISTINCT
+-- 컬럼에 포함된 중복 값을 한 번만 표시하고자 할 때 사용
+
+-- EMPLOYEE 테이블에서 직원의 직급 코드를 조회
+SELECT JOB_CODE FROM EMPLOYEE;
+
+-- EMPLOYEE 테이블에서 직원의 직급 코드를 조회
+SELECT DISTINCT JOB_CODE FROM EMPLOYEE;
+
+-- * DISTINCT 주의사항 
+--   -> DISTINCT SELECT 구문 하나 당 한 번만 사용 가능
