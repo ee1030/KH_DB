@@ -316,5 +316,107 @@ WHERE
     email LIKE '____#_%' ESCAPE '#'
     AND ( dept_code = 'D9'
           OR dept_code = 'D6' )
-    AND ( hire_date BETWEEN '90/01/01' AND '00/12/01' )
+    AND hire_date BETWEEN '90/01/01' AND '00/12/01'
     AND salary >= 2700000;
+
+------------------------------------------------------------------------------
+
+-- IS NOT NULL : 컬럼값이 NULL이 아닌경우
+
+-- EMPLOYEE 테이블에서
+-- 보너스를 받지 않는 사원의 사번, 이름, 급여, 보너스 조회
+SELECT EMP_ID, EMP_NAME, SALARY, BONUS
+FROM EMPLOYEE
+WHERE BONUS IS NULL;
+
+-- EMPLOYEE 테이블에서
+-- 사수(직속상관)이 없고, 부서코드도 없는 사원의
+-- 사원명, 사수 사번, 부서코드 조회
+SELECT EMP_NAME, MANAGER_ID, DEPT_CODE
+FROM EMPLOYEE
+WHERE MANAGER_ID IS NULL AND DEPT_CODE IS NULL;
+
+-- IN
+-- 비교하려는 컬럼값과 목록(괄호 내부)에 일치하는 값이 있다면 TRUE를 반환하는 연산자
+-- 컬럼명 IN (A, B, C, D, ...)
+
+-- EMPLOYEE 테이블에서
+-- 부서코드가 D6, D8, D9인 사원의
+-- 사번, 이름, 부서코드, 급여 조회
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D6' OR DEPT_CODE = 'D8' OR DEPT_CODE = 'D9';
+
+-- IN 사용
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE DEPT_CODE IN ('D6', 'D8', 'D9');
+
+-- 연산자 우선순위
+
+/*
+1. 산술
+2. 연결 ||
+3. 비교 =, !=, ^=, <>, >, <, >=, <=
+4. IS NULL, LIKE, IN
+5. BETWEEN A AND B
+6. NOT 
+7. AND
+8. OR
+*/
+
+------------------------------------------------------------------------------
+
+-- ORDER BY 절(★★★★★)
+    -- SELECT한 결과의 집합(RESULT SET)을 정렬할때 사용하는 구문
+    -- SELECT 구문 제일 마지막 줄에 작성
+    -- SELECT문 해석 순서 중에서도 제일 마지막
+    
+-- [작성법]
+
+/*
+SELECT 컬럼명, [컬럼명, ...]
+FROM 테이블명
+[WHERE 조건식]
+[ORDER BY 컬럼명 | 별칭 | 컬럼 순서 정렬방법(오름차순, 내림차순) [NULLS FIRST | LAST]
+*/
+
+-- EMPLOYEE 테이블에서
+-- 모든 사원의 이름, 급여, 부서코드를 이름 오름차순으로 출력
+SELECT EMP_NAME, SALARY, DEPT_CODE
+FROM EMPLOYEE
+ORDER BY EMP_NAME /*ASC*/; -- 오름차순이 기본값이다.
+
+SELECT EMP_NAME, SALARY, DEPT_CODE
+FROM EMPLOYEE
+ORDER BY 1; -- 조회한 컬럼 중 첫번재(EMP_NAME)를 기준으로 정렬
+
+-- EMP_NAME 내림차순
+SELECT EMP_NAME, SALARY, DEPT_CODE
+FROM EMPLOYEE
+ORDER BY 1 DESC;
+
+-- EMPLOYEE 테이블에서
+-- 모든 사원의 이름, 연봉, 부서코드를
+-- 부서코드 내림차순으로 정렬하여 조회
+SELECT EMP_NAME, SALARY*12 연봉, DEPT_CODE
+FROM EMPLOYEE
+ORDER BY DEPT_CODE DESC NULLS LAST;
+
+-- EMPLOYEE 테이블에서
+-- 모든 사원의 이름, 연봉, 부서코드를
+-- 연봉 내림차순으로 정렬하여 조회
+SELECT EMP_NAME, SALARY*12 연봉, DEPT_CODE
+FROM EMPLOYEE
+ORDER BY 연봉 DESC NULLS LAST;
+
+-- EMPLOYEE 테이블에서
+-- 모든 사원의 이름, 연봉, 부서코드를
+-- 연봉 내림차순으로 정렬하여 조회 단 연봉이 4천만 이상인 사람만
+SELECT EMP_NAME, SALARY*12 연봉, DEPT_CODE
+FROM EMPLOYEE
+WHERE SALARY*12 /*연봉*/ >= 40000000 -- WHERE 절에는 별칭 사용이 불가하다.
+ORDER BY 연봉 DESC NULLS LAST;
+
+
+
