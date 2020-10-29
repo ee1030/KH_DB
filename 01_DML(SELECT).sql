@@ -224,3 +224,97 @@ FROM EMPLOYEE;
 SELECT EMP_NAME 이름, SALARY || '(원)' 급여
 FROM EMPLOYEE;
 
+------------------------------------------------------------------------------
+
+-- LIKE(★★★★★)
+
+/*
+비교하려는 값이 지정한 특정 패턴을 만족시키는 데이터를 조회할 때 사용
+
+비교대상컬럼명 LIKE '문자 패턴'
+
+와일드카드 '%', '_'
+
+패턴 1) %
+'김%' (김 으로 시작하는 값)
+'%김' (김 으로 끝나는 값)
+'%김%' (김 이라는 글자가 포함되는 값)
+
+패턴 2) _ 언더바
+'_' (한글자)
+'__' (두글자)
+'김__' (김 으로 시작하는 세글자)
+
+    0101234[1]234
+    PHONE LIKE '_______1%'
+
+*/
+
+-- EMPLOYEE 테이블에서
+-- 성이 '전'씨인 사원의 사번, 이름, 부서코드 조회
+SELECT EMP_ID 사번, EMP_NAME 이름, DEPT_CODE 부서코드
+FROM EMPLOYEE
+WHERE EMP_NAME LIKE '전%';
+
+-- EMPLOYEE 테이블에서
+-- 이름에 '하'가 포함된 사원의 사번, 이름, 부서코드 조회
+SELECT EMP_ID 사번, EMP_NAME 이름, DEPT_CODE 부서코드
+FROM EMPLOYEE
+WHERE EMP_NAME LIKE '%하%';
+
+-- EMPLOYEE 테이블에서
+-- 전화번호 4번째 자리가 7로 시작하는 사원의
+-- 사번, 이름, 전화번호를 조회
+SELECT EMP_ID 사번, EMP_NAME 이름, PHONE 전화번호
+FROM EMPLOYEE
+WHERE PHONE LIKE '___7%';
+
+
+-- ESCAPE OPTIONS
+-- LIKE의 와일드카드 기호와, 검색하려는 기호가 동일할 경우
+-- 검색기호를 인식 시키기 위해서 사용하는 구문
+
+-- EMPLOYEE 테이블에서
+-- EMAIL 중 '_' 기호 앞이 세글자인 사원의
+-- 사번, 이름, 이메일 조회
+SELECT EMP_ID 사번, EMP_NAME 이름, EMAIL
+FROM EMPLOYEE
+WHERE EMAIL LIKE '___#_%' ESCAPE '#';
+
+-- NOT LIKE
+SELECT EMP_ID 사번, EMP_NAME 이름, EMAIL
+FROM EMPLOYEE
+WHERE EMAIL NOT LIKE '___#_%' ESCAPE '#';
+
+-- EMPLOYEE 테이블에서
+-- 성이 '김'씨가 아닌 사원의 모든 정보 조회
+SELECT *
+FROM EMPLOYEE
+WHERE EMP_NAME NOT LIKE '김%';
+
+-- EMPLOYEE 테이블에서
+-- 이름 끝이 '연' 으로 끝나는 사원의 이름 조회
+SELECT EMP_NAME 이름
+FROM EMPLOYEE
+WHERE EMP_NAME LIKE '%연';
+
+-- EMPLOYEE 테이블에서
+-- 전화번호 처음 세자리가 010이 아닌 사원의 이름 조회, 전화번호 조회
+SELECT EMP_NAME 이름, PHONE 전화번호
+FROM EMPLOYEE
+WHERE PHONE NOT LIKE '010%';
+
+-- EMPLOYEE 테이블에서
+-- 메일주소의 '_'의 앞이 네 글자 이면서 DEPT_CODE가 D9 또는 D6이고
+-- 고용일이 90/01/01 ~ 00/12/01이고
+-- 급여가 270만 이상인 사원의 전체 정보 조회
+SELECT
+    *
+FROM
+    employee
+WHERE
+    email LIKE '____#_%' ESCAPE '#'
+    AND ( dept_code = 'D9'
+          OR dept_code = 'D6' )
+    AND ( hire_date BETWEEN '90/01/01' AND '00/12/01' )
+    AND salary >= 2700000;
