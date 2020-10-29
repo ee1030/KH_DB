@@ -115,3 +115,20 @@ FROM EMPLOYEE;
 SELECT EMP_ID, EMP_NAME, DEPT_CODE
 FROM EMPLOYEE
 WHERE DEPT_CODE = 'D9';
+
+-- 급여가 4백만 이상인 사원의 이름, 급여 조회
+SELECT EMP_NAME, SALARY
+FROM EMPLOYEE
+WHERE SALARY > 4000000;
+
+-- EMPLOYEE 테이블에서 부서코드가 'D9'이 아닌 사원의
+-- 이름, 부서코드 조회
+SELECT EMP_NAME 이름, DEPT_CODE "부서 코드"
+FROM EMPLOYEE
+WHERE DEPT_CODE <> 'D9';
+
+-- EMPLOYEE 테이블에서 퇴사한 사원의
+-- 이름, 전화번호, 부서코드 조회
+SELECT EMP_NAME 이름, PHONE 전화번호, DEPT_CODE 부서코드
+FROM EMPLOYEE
+WHERE ENT_YN = 'Y';
