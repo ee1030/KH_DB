@@ -1,5 +1,6 @@
 -- SQL01_SELECT(basic).pdf 풀기
 -- 3번, 10번 제외
+-- 집에서 깃헙 실습 하려고 만든 주석
 
 -- 1번 문제
 SELECT DEPARTMENT_NAME 학과명, CATEGORY 계열
