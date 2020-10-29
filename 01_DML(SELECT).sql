@@ -125,10 +125,102 @@ WHERE SALARY > 4000000;
 -- 이름, 부서코드 조회
 SELECT EMP_NAME 이름, DEPT_CODE "부서 코드"
 FROM EMPLOYEE
-WHERE DEPT_CODE <> 'D9';
+WHERE DEPT_CODE != 'D9';
 
 -- EMPLOYEE 테이블에서 퇴사한 사원의
 -- 이름, 전화번호, 부서코드 조회
 SELECT EMP_NAME 이름, PHONE 전화번호, DEPT_CODE 부서코드
 FROM EMPLOYEE
-WHERE ENT_YN = 'Y';
+WHERE ENT_YN = 'N';
+
+
+-- 1. EMPLOYEE 테이블에서 SAL_LEVEL이 S1인 사원의
+-- 이름, 월급 고용일, 연락처 조회
+SELECT EMP_NAME 이름, SALARY 월급, HIRE_DATE 고용일, PHONE 연락처
+FROM EMPLOYEE
+WHERE SAL_LEVEL = 'S1';
+
+-- 2. EMPLOYEE 테이블에서 월급이 3000000이상인 사원의
+-- 이름, 월금, 고용일 조회
+SELECT EMP_NAME 이름, SALARY 월급, HIRE_DATE 고용일
+FROM EMPLOYEE
+WHERE SALARY >= 3000000;
+
+-- 3. EMPLOYEE 테이블에서 연봉이 5천만원 미만인 사원의
+-- 이름, 월급, 연봉, 고용일 조회
+SELECT EMP_NAME 이름, SALARY 월급, SALARY*12 연봉, HIRE_DATE 고용일
+FROM EMPLOYEE
+WHERE SALARY*12 < 50000000;
+
+------------------------------------------------------------------------------
+
+-- 논리 연산자(AND / OR)
+-- 여러가지 조건이 있을 경우 사용하는 연산자
+
+-- EMPLOYEE 테이블에서
+-- 부서코드가 'D6'이고
+-- 급여를 200만 이상 받는 직원의
+-- 사번, 이름, 부서코드, 급여 조회
+SELECT EMP_ID 사번, EMP_NAME 이름, DEPT_CODE 부서코드, SALARY 급여
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D6' AND SALARY >= 2000000;
+
+-- EMPLOYEE 테이블에서
+-- 급여를 350만 이상 600만 이하로 받는 직원의
+-- 사번 이름 급여 부서코드 직급코드 조회
+SELECT EMP_ID 사번, EMP_NAME 이름,SALARY 급여, DEPT_CODE 부서코드, JOB_CODE 직급코드
+FROM EMPLOYEE
+WHERE SALARY >= 3500000 AND SALARY <= 6000000;
+
+-- EMPLOYEE 테이블에
+-- 부서코드가 D5 또는 D9인 사원 중
+-- 고용일이 2002년 1월 1일보다 빠른 사원
+-- 사번, 이름, 부서코드, 고용일 조회
+SELECT EMP_ID 사번, EMP_NAME 이름, DEPT_CODE 부서코드, HIRE_DATE 고용일
+FROM EMPLOYEE
+WHERE (DEPT_CODE = 'D5' OR DEPT_CODE = 'D9') AND HIRE_DATE < '02/01/01';
+
+-- BETWEEN A AND B
+-- >> A 이상 B 이하
+-- EMPLOYEE 테이블에서
+-- 급여를 350만 이상 600만 이하로 받는 사원의
+-- 사번, 이름, 급여, 부서코드, 직급코드 조회
+SELECT EMP_ID 사번, EMP_NAME 이름, SALARY 급여, DEPT_CODE 부서코드, JOB_CODE 직급코드
+FROM EMPLOYEE
+WHERE SALARY BETWEEN 3500000 AND 6000000;
+
+-- NOT (논리 부정 연산자)
+-- EMPLOYEE 테이블에서
+-- 급여를 350만 미만 600만 초과로 받는 사원의
+-- 사번, 이름, 급여, 부서코드, 직급코드 조회
+
+SELECT EMP_ID 사번, EMP_NAME 이름, SALARY 급여, DEPT_CODE 부서코드, JOB_CODE 직급코드
+FROM EMPLOYEE
+WHERE SALARY NOT BETWEEN 3500000 AND 6000000;
+
+-- EMPLOYEE 테이블에서
+-- 입사일이 '90/01/01' ~ '99/12/31'인
+-- 사원의 이름, 입사일 조회
+SELECT EMP_NAME 이름, HIRE_DATE 입사일
+FROM EMPLOYEE
+WHERE HIRE_DATE BETWEEN '90/01/01' AND '99/12/31';
+
+-- NOT 연습
+SELECT EMP_NAME 이름, HIRE_DATE 입사일
+FROM EMPLOYEE
+WHERE NOT HIRE_DATE BETWEEN '90/01/01' AND '99/12/31';
+
+-- 연결 연산자( || )
+-- 여러 컬럼을 하나의 컬럼처럼 연결하거나
+-- 컬럼 + 리터럴의 형태를 만들 수 있는 연산자
+
+-- EMPLOYEE 테이블에서 사번, 이름, 급여를 연결해서 조회
+SELECT EMP_ID || EMP_NAME || SALARY 합체
+FROM EMPLOYEE;
+
+-- EMPLOYEE 테이블에서
+-- 모든 사원의 이름, 급여 조회
+-- 단, 급여 뒤에 '(원)' 단위 붙여서 조회
+SELECT EMP_NAME 이름, SALARY || '(원)' 급여
+FROM EMPLOYEE;
+
