@@ -97,3 +97,21 @@ SELECT DISTINCT JOB_CODE FROM EMPLOYEE;
 
 -- * DISTINCT 주의사항 
 --   -> DISTINCT SELECT 구문 하나 당 한 번만 사용 가능
+
+-- DISTINCT는 뒤쪽에 작성된 컬럼명을 모두 묶어서 중복값을 제거하여 출력
+SELECT DISTINCT JOB_CODE, DEPT_CODE
+FROM EMPLOYEE;
+
+-- WHERE절 
+-- 조회할 테이블에서 조건이 맞는 값을 가진 행을 골라내는 구문
+
+-- WHERE절에는 TRUE, FALSE가 나올 수 있는
+-- 비교 연산자가 사용됨.
+-- >, <, >=, =<
+-- = (같다), !=, ^=, <> (같지 않다)
+
+-- EMPLOYEE 테이블에서
+-- 부서코드가 'D9'인 직원의 사번, 이름, 부서코드 조회
+SELECT EMP_ID, EMP_NAME, DEPT_CODE
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D9';
