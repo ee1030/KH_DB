@@ -289,10 +289,101 @@ WHERE MOD (EMP_ID, 2) = 1;
 -- 3. EMPLOYEE 테이블에서 근무 년수가 20년 이상인 직원 정보 조회
 SELECT *
 FROM EMPLOYEE
-WHERE CEIL(MONTHS_BETWEEN(SYSDATE, HIRE_DATE)/12) >= 20;
+WHERE EXTRACT(YEAR FROM SYSDATE) - EXTRACT(YEAR FROM HIRE_DATE) > 20;
+-- WHERE ADD_MONTHS(HIRE_DATE, 240) < SYSDATE;
 
 -- 4. EMPLOYEE 테이블에서 사원명, 입사일, 입사한 월의 근무일수를 조회
 SELECT EMP_NAME, HIRE_DATE,
-    EXTRACT(DAY FROM LAST_DAY(HIRE_DATE)) - EXTRACT(DAY FROM HIRE_DATE)
+    --EXTRACT(DAY FROM LAST_DAY(HIRE_DATE)) - EXTRACT(DAY FROM HIRE_DATE)
+    LAST_DAY(HIRE_DATE) - HIRE_DATE + 1
 FROM
     EMPLOYEE;
+
+--------------------------------------------------------------------------------
+
+-- 4. 형변환 함수
+
+/*
+          --TO_CHAR-->           --TO_DATE-->
+    NUBER <---------> CHARACTER <----------> DATE
+         <--TO_NUMBER--          <-TO_CHAR--
+*/
+
+-- 1) TO_CHAR(날짜|숫자[, 포맷])
+-- 날짜 또는 숫자형 데이터를 문자형으로 바꾸는 함수
+-- 포맷 지정 시 포맷에 맞는 형태의 데이터로 변경하여 반환
+
+-- [숫자]
+SELECT TO_CHAR(1234) FROM DUAL; -- '1234'
+
+-- 5칸 오른쪽 정렬, 빈칸 공백
+SELECT TO_CHAR(1234, '99999') FROM DUAL;
+
+-- 5칸 오른쪽 정렬, 빈칸 0
+SELECT TO_CHAR(1234, '00000') FROM DUAL;
+
+--> 9, 0 둘다 숫자를 채우겠다는 의미
+   -- 9는 빈칸 / 0은 빈칸에 0채움
+
+-- 현재 설정된 나라의 화폐 단위 + 세자리 수 마다 , 붙이기
+SELECT TO_CHAR(10000, 'L99,999') FROM DUAL;
+
+-- 다른 나라의 화폐단위 + 세자리 수 마다 , 붙이기
+SELECT TO_CHAR(10000, '$99,999') FROM DUAL;
+
+
+SELECT TO_CHAR(100000, 'L99,999') FROM DUAL;
+--> 설정한 포맷의 범위를 넘어서면 값이 모두 #으로 초기화 됨
+
+-- EMPLOYEE 테이블에서
+-- 모든 사원의 사원명, 급여, 연봉을 조회
+-- 단, 급여, 연봉은 세자리마다 ','로 구분 + 원화기호 추가
+SELECT EMP_NAME,
+    TRIM(TO_CHAR(SALARY, 'L999,999,999')) 급여,
+    TRIM(TO_CHAR(SALARY*12, 'L999,999,999')) 연봉
+FROM EMPLOYEE;
+
+-- [날짜]
+/*
+    PM HH : AM/PM
+    HH24 : 24시간 표기법
+    MI : 분
+    SS : 초
+    
+    YYYY : 2020년, YY : 20년
+    MM : 월
+    DD : 일
+    DAY : 금요일 DY : 금, D : 6
+    Q : 분기
+*/
+
+SELECT TO_CHAR(SYSDATE, 'PM HH:MI:SS') FROM DUAL;
+SELECT TO_CHAR(SYSDATE, 'HH24:MI:SS') FROM DUAL;
+
+SELECT TO_CHAR(SYSDATE, 'YY-MM-DD D Q') FROM DUAL;
+
+
+-- EMPLOYEE 테이블에서
+-- 모든 사원의 이름, 고용일 조회
+-- 단 고용일은 '2020-10-30 금' 형식으로 조회
+SELECT EMP_NAME 이름, TO_CHAR(HIRE_DATE, 'YYYY-MM-DD DY') 고용일
+FROM EMPLOYEE;
+
+-- EMPLOYEE 테이블에서
+-- 모든 사원의 이름, 고용일 조회
+-- 단 고용일은 '2020년 10월 30일 금요일' 형식으로 조회
+SELECT EMP_NAME 이름, TO_CHAR(HIRE_DATE, 'YYYY"년" MM"월" DD"일" DAY') 고용일
+FROM EMPLOYEE;
+-- 지정되지 않은 패턴을 사용하고 싶은 경우 ""(쌍따옴표)로 감싸서 작성
+
+-- 2) TO_NUMBER(문자[, 포맷]) : 문자형 데이터를 숫자형 데이터로 형변환
+-- 명시적으로 문자 -> 숫자 변환
+SELECT TO_NUMBER('100') + TO_NUMBER('200') FROM DUAL;
+
+-- 묵시적 변환
+SELECT '100' + '200' FROM DUAL;
+--> 오라클에 의해 문자형 데이터이지만, 숫자 또는 날짜의 형태를 띄고 있다면
+--> 자동으로 형태를 변환시켜 줌.
+
+SELECT TO_NUMBER('1,000,000', '9,999,999') FROM DUAL;
+
