@@ -493,5 +493,144 @@ SELECT EMP_NAME 이름, DEPT_CODE 부서코드,
     -- CEIL(MONTHS_BETWEEN(SYSDATE, TO_DATE(SUBSTR(EMP_NO, 1, 6)))/12) "나이(햇수)"
 FROM EMPLOYEE;
 
+--------------------------------------------------------------------------------
 
+-- 6. 선택 함수
+-- 여러가지 경우에 따라 선택을 할 수 있는 기능을 제공하는 함수
 
+-- 1) DECODE(컬럼명 | 계산식, 결과1, 선택1, 결과2, 선택2, 결과3, 선택3, ..., 나머지)
+-- 계산식 또는 컬럼 값이 결과와 일치하면 해당 선택 값을 반환
+-- (Java switch와 비슷)
+
+-- EMPLOYEE 테이블에서
+-- 사번, 이름, 주민등록번호, 성별(남/여) 조회
+SELECT EMP_ID, EMP_NAME, EMP_NO,
+    DECODE(SUBSTR(EMP_NO, 8, 1), '1', '남자', '2', '여자') "성별(남/여)"
+FROM EMPLOYEE;
+
+-- EMPLOYEE 테이블에서
+-- 직원의 급여를 인상하고자 한다.
+-- 직급코드가 'J7'인 직원은 10%인상
+-- 'J6'인 직원은 15%인상
+-- 'J5'인 직원은 20%인상
+-- 그외 직급은 5%만 인상
+-- 이때 사원명, 직급코드, 기존급여, 인상급여를 직급코드 오름차순으로 조회
+SELECT EMP_NAME, JOB_CODE, SALARY,
+    DECODE(JOB_CODE, 'J7', SALARY*1.1,
+                    'J6', SALARY*1.15,
+                    'J7', SALARY*1.2,
+                     SALARY*1.05) 인상급여
+FROM EMPLOYEE
+ORDER BY JOB_CODE;
+
+-- 2) CASE문
+/* [작성법]
+
+    CASE WHEN 조건식 THEN 결과1
+         WHEN 조건식 THEN 결과2
+         WHEN 조건식 THEN 결과3
+         ...
+         ELSE 나머지 결과
+    END
+    
+*/
+
+-- EMPLOYEE 테이블에서
+-- 직원의 급여를 인상하고자 한다.
+-- 직급코드가 'J7'인 직원은 10%인상
+-- 'J6'인 직원은 15%인상
+-- 'J5'인 직원은 20%인상
+-- 그외 직급은 5%만 인상
+-- 이때 사원명, 직급코드, 기존급여, 인상급여를 직급코드 오름차순으로 조회
+SELECT EMP_NAME, JOB_CODE, SALARY,
+    CASE WHEN JOB_CODE = 'J7' THEN SALARY*1.1
+         WHEN JOB_CODE = 'J6' THEN SALARY*1.15
+         WHEN JOB_CODE = 'J5' THEN SALARY*1.2
+         ELSE SALARY*1.05
+    END 인상급여
+FROM EMPLOYEE
+ORDER BY 2;
+
+-- EMPLOYEE 테이블에서 사번, 이름, 급여, 개발자 등급 조회
+-- 개발자 등급 기준
+-- 급여 500만 이상 : '고급'
+-- 급여 500만 미만, 300만 이상 : '중급'
+-- 급여 300만 미만 : '초급'
+SELECT EMP_ID, EMP_NAME, SALARY,
+    CASE WHEN SALARY > 5000000 THEN '고급'
+         WHEN SALARY >= 3000000 THEN '중급'
+         ELSE '초급'
+    END "개발자 등급"
+FROM EMPLOYEE;
+         
+--------------------------------------------------------------------------------
+
+-- [그룹 함수]
+-- 하나 이상의 행을 그룹으로 묶어 연산한 후 하나의 결과를 반환하는 함수
+
+-- 1) SUM(숫자가 기록된 컬럼명) : 해당 컬럼의 총합을 반환
+
+-- EMPLOYEE 테이블에서 모든 사원의 급여 총합 조회
+SELECT SUM(SALARY) 급여총합
+FROM EMPLOYEE;
+
+-- EMPLOYEE 테이블에서 여자 사원의 급여 총합 조회
+SELECT TO_CHAR(SUM(SALARY), 'L999,999,999') 급여총합
+FROM EMPLOYEE
+WHERE SUBSTR(EMP_NO, 8, 1) = 2;
+
+-- EMPLOYEE 테이블에서
+-- 부서코드가 'D5'인 직원의 보너스 포함 연봉 총합 조회
+SELECT TO_CHAR(SUM(SALARY*(1+NVL(BONUS, 0))*12), 'L999,999,999') 보너스포함연봉D5
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D5';
+
+-- 2) AVG(숫자가 기록된 컬럼명) : 해당 컬럼의 평균을 반환
+-- EMPLOYEE 테이블의 모든 사우너의 급여 합, 평균 조회
+SELECT SUM(SALARY), FLOOR(AVG(SALARY))
+FROM EMPLOYEE;
+
+-- 3) MIN(컬럼값) : 그룹 중 지정된 컬럼에서 가장 작은 값 반환
+--    MAX(컬럼값) : 그룹 중 지정된 컬럼에서 가장 큰 값 반환
+
+-- EMPLOYEE 테이블에서 이름 순서가 가장 빠른 사람과, 마지막 사람 조회
+SELECT MIN(EMP_NAME), MAX(EMP_NAME)
+FROM EMPLOYEE;
+
+-- EMPLOYEE 테이블에서 이메일 순서가 가장 빠른 사람과, 마지막 사람 조회
+SELECT MIN(EMAIL), MAX(EMAIL)
+FROM EMPLOYEE;
+
+-- EMPLOYEE 테이블에서 급여가 가장 적은 사람과, 많은 사람 조회
+SELECT MIN(SALARY), MAX(SALARY)
+FROM EMPLOYEE;
+
+-- EMPLOYEE 테이블에서 입사일이 가장 빠른 사람과, 늦은 사람 조회
+SELECT MIN(HIRE_DATE), MAX(HIRE_DATE)
+FROM EMPLOYEE;
+
+-- EMPLOYEE 테이블에서
+-- 전체 급여 합,
+-- 평균, 
+-- 가장 많이 받는사람 급여, 
+-- 가장 적은 사람 급여 조회
+SELECT SUM(SALARY), FLOOR(AVG(SALARY)), MIN(SALARY), MAX(SALARY)
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D5';
+
+-- 4) COUNT(* || [DISTINCT]컬럼명) : 
+-- COUNT(*) : NULL을 포함한 모든 행의 개수를 반환
+-- COUNT(컬럼명) : 해당 컬럼의 컬럼 값 중 NULL을 제외한 개수를 반환
+-- COUNT(DISTINCT 컬럼명) : 중복된 행 제거 + NULL 제외한 행의 개수
+
+-- EMPLOYEE 테이블에서
+-- 모든 사원의 수
+-- 부서코드가 있는 사원의 수
+-- 사원이 속해있는 부서의 수
+SELECT COUNT(*) 모든사원, COUNT(DEPT_CODE) 부서있는사원, COUNT(DISTINCT DEPT_CODE) 사원있는부서
+FROM EMPLOYEE;
+
+-- EMPLOYEE 테이블에서 급여가 300만 이상인 사원의 수 조회
+SELECT COUNT(*) 부자놈들
+FROM EMPLOYEE
+WHERE SALARY >= 3000000;
