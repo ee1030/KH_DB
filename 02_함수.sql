@@ -445,11 +445,53 @@ FROM EMPLOYEE;
 -- 재직중인 사람은 '재직중'
 -- 퇴사한 사람은 '퇴사(퇴사일)'로 변경하여
 -- 사번, 사원명, 재직여부 조회
-SELECT EMP_ID, EMP_NAME, NVL2(ENT_DATE, '퇴사('||ENT_DATE||')', '재직중')
+SELECT EMP_ID, EMP_NAME, NVL2(ENT_DATE, '퇴사('||ENT_DATE||')', '재직중') 재직여부
+FROM EMPLOYEE
+ORDER BY EMP_ID DESC;
+
+-- 단일행 함수 연습 문제
+
+--1. EMPLOYEE 테이블에서
+--  직원명과 주민번호를 조회
+--  단, 주민번호 9번째 자리부터 끝까지는 '*'문자로 채움
+--  예 : 홍길동 771120-1******
+SELECT EMP_NAME, RPAD(SUBSTR(EMP_NO,1, 8), 14, '*')
 FROM EMPLOYEE;
 
 
+--2. EMPLOYEE 테이블에서
+--  직원명, 직급코드, 연봉(원) 조회
+--  단, 총수령액은 ￦57,000,000 으로 표시
+--  (총수령액은 보너스가 적용된 1년치 급여)
+SELECT EMP_NAME, JOB_CODE, TO_CHAR(SALARY, 'L999,999,999')
+FROM EMPLOYEE;
 
+-- 3. EMPLOYEE 테이블에서
+--   부서코드가 D5, D9인 직원들 중에서 2004년도에 입사한 직원의 
+--	 사번 사원명 부서코드 입사일 조회
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, HIRE_DATE
+FROM EMPLOYEE
+WHERE (DEPT_CODE = 'D5' OR DEPT_CODE = 'D9') AND EXTRACT(YEAR FROM HIRE_DATE) = 2004;
+
+-- 4. EMPLOYEE 테이블에서
+--   직원명, 입사일, 입사한 달의 근무일수 조회
+--   단, 입사한 날도 근무일수에 포함해서 +1 할 것
+SELECT EMP_NAME, HIRE_DATE,
+    LAST_DAY(HIRE_DATE)-HIRE_DATE+1 "입사달 근무 일수"
+FROM EMPLOYEE;
+
+
+--5. EMPLOYEE 테이블에서
+--  직원명, 부서코드, 생년월일, 나이(만) 조회
+--  단, 생년월일은 주민번호에서 추출해서, 
+--  ㅇㅇ년 ㅇㅇ월 ㅇㅇ일로 출력되게 함.
+--  나이는 주민번호에서 추출해서 날짜데이터로 변환한 다음, 계산.
+SELECT EMP_NAME 이름, DEPT_CODE 부서코드,
+    TO_CHAR(TO_DATE(SUBSTR(EMP_NO, 1, 6)), 'YY"년" MM"월" DD"일"') 생년월일,
+    -- EXTRACT(YEAR FROM SYSDATE) - EXTRACT(YEAR FROM TO_DATE(SUBSTR(EMP_NO, 1, 6)))
+    CEIL(MONTHS_BETWEEN(SYSDATE, TO_DATE(SUBSTR(EMP_NO, 1, 6)))/12) "나이(햇수)",
+    FLOOR(MONTHS_BETWEEN(SYSDATE, TO_DATE(SUBSTR(EMP_NO, 1, 6)))/12) "나이(만)"
+FROM EMPLOYEE;
 
 
 
