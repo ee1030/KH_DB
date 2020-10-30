@@ -387,3 +387,69 @@ SELECT '100' + '200' FROM DUAL;
 
 SELECT TO_NUMBER('1,000,000', '9,999,999') FROM DUAL;
 
+-- 3) TO_DATE(문자[, 포맷])
+
+SELECT TO_DATE('20210101', 'YYYYMMDD') FROM DUAL;
+
+SELECT TO_DATE(20210101, 'YYYYMMDD') FROM DUAL;
+--> 내부적으로 문자열로 바뀐 뒤 다시 DATE 타입으로 바뀐다.
+
+SELECT TO_DATE('940104', 'YYMMDD') FROM DUAL; -- 90/01/16
+
+SELECT TO_CHAR(TO_DATE('940104', 'YYMMDD'), 'YYYY-MM-DD') FROM DUAL; -- 2094-01-04
+SELECT TO_CHAR(TO_DATE('940104', 'RRMMDD'), 'RRRR-MM-DD') FROM DUAL; -- 1994-01-04
+
+/*
+    TO_DATE를 이용한 변환시 YY, RR의 차이점
+    -- YY : 현재 세기를 적용(21C == 20XX년대)
+    -- RR : 읽어들인 값이 50년 이상이면 이전 세기(20C = 19XX년대)
+                          50년 미만이면 현재세기(21C == 20XX년대) 적용
+*/
+
+-- EMPLOYEE 테이블에서
+-- 2000년도 이후에 입사한 사원의 사번, 이름, 입사일
+SELECT EMP_ID, EMP_NAME, HIRE_DATE
+FROM EMPLOYEE
+-- WHERE HIRE_DATE >= '00/01/01'; -- 묵시적
+WHERE HIRE_DATE >= TO_DATE('20000101', 'YYYYMMDD'); -- 명시적
+
+--------------------------------------------------------------------------------
+
+-- 5. NULL 처리 함수
+
+-- 1) NVL(컬럼명, NULL인 경우 대체값)
+--> 해당 컬럼 값이 NULL인 경우 대체값을 사용한다.
+
+-- EMPLOYEE 테이블에서
+-- BONUS가 NULL인 사원의 컬럼값을 0으로 변환하여
+-- 사원명, 급여, BONUS 조회
+SELECT EMP_NAME, SALARY, NVL(BONUS, 0) BONUS
+FROM EMPLOYEE;
+
+-- EMPLOYEE 테이블에서
+-- 부서코드가 NULL인 사원의 사번, 이름, 부서코드 조회
+-- NULL인 부서코드 "부서 없음" 변환
+SELECT EMP_ID, EMP_NAME, NVL(DEPT_CODE, '부서 없음') DEPT_CODE
+FROM EMPLOYEE
+WHERE DEPT_CODE IS NULL;
+
+-- 2) NVL2(컬럼명, NULL이 아닌 경우 대체값, NULL인 경우 대체값)
+-- EMPLOYEE 테이블에서
+-- 기존에 보너스를 받지 못하던 사원은 보너스율을 0.3
+-- 기존에 보너스를 받던 사원은 0.8로 변경하여
+-- 사원명, 기존 보너스, 변경된 보너스 조회
+SELECT EMP_NAME, NVL(BONUS, 0) "기존 보너스", NVL2(BONUS, 0.8, 0.3) "변경된 보너스"
+FROM EMPLOYEE;
+
+-- EMPLOYEE 테이블에서
+-- 재직중인 사람은 '재직중'
+-- 퇴사한 사람은 '퇴사(퇴사일)'로 변경하여
+-- 사번, 사원명, 재직여부 조회
+SELECT EMP_ID, EMP_NAME, NVL2(ENT_DATE, '퇴사('||ENT_DATE||')', '재직중')
+FROM EMPLOYEE;
+
+
+
+
+
+
