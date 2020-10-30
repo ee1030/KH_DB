@@ -110,4 +110,165 @@ SELECT SUBSTR('SHOWMETHEMONEY', -8, 3) FROM DUAL;
 SELECT EMP_NAME, EMAIL, SUBSTR(EMAIL, 1, INSTR(EMAIL, '@') - 1)
 FROM EMPLOYEE;
 
+-- EMPLOYEE 테이블에서
+-- 사원명, 주민등록번호, 주민등록번호 중 성별 부분 조회
+SELECT EMP_NAME, EMP_NO, SUBSTR(EMP_NO, INSTR(EMP_NO, '-')+1, 1)
+FROM EMPLOYEE;
+
+-- EMPLOYEE 테이블에서
+-- 성별이 남성인 사원만 조회
+-- 사원명, 주민등록번호, 주민등록번호 중 성별 부분 조회
+SELECT EMP_NAME, EMP_NO, SUBSTR(EMP_NO, 8, 1) "성별 부분"
+FROM EMPLOYEE
+WHERE SUBSTR(EMP_NO, 8, 1) = '1';
+
+-- EMPLOYEE 테이블에서
+-- 사원명, 태어난 년도, 월, 일을 조회
+SELECT 
+    EMP_NAME, SUBSTR(EMP_NO, 1, 2) || '년' 연도,
+    SUBSTR(EMP_NO, 3, 2) || '월' 월,
+    SUBSTR(EMP_NO, 5, 2) || '일' 일
+FROM 
+    EMPLOYEE;
+    
+--------------------------------------------------------------------------------
+
+-- 5) LPAD, RPAD
+-- 주어진 컬럼 값이나 문자열에 임의의 문자열을 좌/우에 덧붙여서 길이 N인 문자열을 반환
+-- [작성법]
+-- LPAD | RPAD (컬럼명 | 문자열, 반환할 문자열의 길이(N)[, 덧붙이려는 문자(STR)]
+
+-- 20칸을 할당하고 데이터를 오른쪽 정렬 후 왼쪽 공백에 빈칸을 덧붙인다.
+SELECT 
+    LPAD(EMAIL, 20) 
+FROM 
+    EMPLOYEE;
+
+-- 20칸을 할당하고 데이터를 오른쪽 정렬 후 왼쪽 공백에 '#'을 덧붙인다.
+SELECT 
+    LPAD(EMAIL, 20, '#') 
+FROM 
+    EMPLOYEE;
+    
+-- 20칸을 할당하고 데이터를 왼쪽 정렬 후 오른쪽 공백에 '#'을 덧붙인다.
+SELECT 
+    RPAD(EMAIL, 20, '#') 
+FROM 
+    EMPLOYEE;
+    
+-- EMPLOYEE 테이블에서
+-- 사원명, 주민등록번호를 조회
+-- 단, 주민등록번호 뒷자리는 성별만 보이고 나머지는 *로 처리
+SELECT EMP_NAME, RPAD(SUBSTR(EMP_NO,1, 8), 14, '*') 주민등록번호
+FROM EMPLOYEE;
+
+--------------------------------------------------------------------------------
+
+-- 6) REPLACE
+-- 컬럼 값, 또는 문자열에서 특정 문자열을 지정한 문자열로 변경 후 반환
+-- [작성법]
+--  REPLACE(컬럼명 | 문자열, 변경하려는 문자열, 변경하고자 하는 문자열)
+SELECT REPLACE('서울시 강남구 역삼동', '역삼동', '삼성동') 
+FROM DUAL;
+
+-- EMPLOYEE 테이블에서
+-- 사원들의 이메일 주소를 'kh.or.kr'에서 'gmail.com'으로 변경하여
+-- 사원명, 기존 이메일, 바뀐 이메일 조회
+SELECT EMP_NAME, EMAIL, REPLACE(EMAIL, 'kh.or.kr', 'gmail.com')
+FROM EMPLOYEE;
+
+--------------------------------------------------------------------------------
+
+-- 2. 숫자 처리 함수
+
+-- 1) MOD
+-- 두 수를 나누어 나머지를 반환하는 함수
+SELECT MOD(10, 3) FROM DUAL;
+SELECT MOD(-10, 3) FROM DUAL;
+SELECT MOD(10.9, 3) FROM DUAL;
+
+--------------------------------------------------------------------------------
+
+-- 2) ROUND(반올림)
+-- [작성법]
+-- ROUND(컬럼명 | 숫자[, 반올림 위치])
+SELECT ROUND(123.456) FROM DUAL;
+--> ROUND의 기본값은 소수 첫번째 자리에서 반올림하여 정수를 반환함.
+
+SELECT ROUND(123.456, 1) FROM DUAL; -- 123.5
+
+SELECT ROUND(123.456, 0) FROM DUAL; -- 123
+
+SELECT ROUND(123.456, 2) FROM DUAL; -- 123.46
+
+SELECT ROUND(123.456, -2) FROM DUAL; -- 100
+
+--------------------------------------------------------------------------------
+
+-- 3) CEIL(올림)
+SELECT CEIL(123.1) FROM DUAL;
+SELECT CEIL(123.456*10) / 10 FROM DUAL;
+
+
+--------------------------------------------------------------------------------
+
+-- 4) FLOOR(내림)
+SELECT FLOOR(123.1) FROM DUAL; -- 123
+SELECT FLOOR(123.9) FROM DUAL; -- 123
+SELECT FLOOR(123.456*10) / 10 FROM DUAL;
+
+SELECT CEIL(-10.9), FLOOR(-10.9), TRUNC(-10.9) FROM DUAL;
+
+-- 5) TRUNC(버림, 절삭)
+SELECT TRUNC(123.456) FROM DUAL;
+--> 소수점 모두 버림
+
+SELECT TRUNC(123.456, 1) FROM DUAL;
+SELECT TRUNC(123.456, 2) FROM DUAL;
+
+--------------------------------------------------------------------------------
+
+-- 3. 날짜(DATE) 처리 함수
+
+-- 1) SYSDATE : 시스템에 저장되어 있는 현재 날짜(시간)을 반환하는 함수
+SELECT SYSDATE FROM DUAL;
+
+-- 2) MONTHS_BETWEEN(DATE ,DATE)
+-- 두 DATE의 개월 수 차이를 숫자로 리턴하는 함수
+
+-- EMPLOYEE 테이블에서
+-- 사원명, 입사일, 근무 개월 수 조회
+SELECT EMP_NAME, HIRE_DATE, FLOOR(MONTHS_BETWEEN(SYSDATE, HIRE_DATE)) || '개월' "근무 개월 수"
+FROM EMPLOYEE;
+
+-- EMPLOYEE 테이블에서
+-- 사원명, 입사일, 연차 조회
+SELECT EMP_NAME, HIRE_DATE, CEIL(MONTHS_BETWEEN(SYSDATE, HIRE_DATE)/12) || '년차' "연차"
+FROM EMPLOYEE;
+
+-- 3) ADD_MONTHS(DATE, 숫자)
+-- 날짜에 숫자 만큼의 개월 수를 추가하여 반환
+SELECT ADD_MONTHS(SYSDATE, 5) FROM DUAL;
+
+-- EMPLOYEE 테이블에서
+-- 사원의 이름, 입사일, 입사일로 부터 6개월이 지난 날짜 조회
+SELECT EMP_NAME, HIRE_DATE, ADD_MONTHS(HIRE_DATE, 6)
+FROM EMPLOYEE;
+
+-- 4) LAST_DAY(날짜) : 해당 달의 마지막 날짜를 리턴
+SELECT LAST_DAY('20/09/01') FROM DUAL;
+
+-- 5) EXTRACT : 날짜 데이터에서 년, 월, 일 정보를 추출하여 리턴
+-- EXTRACT(YEAR FROM 날짜) : 연도 추출
+-- EXTRACT(MONTH FROM 날짜) : 월 추출
+-- EXTRACT(DAY FROM 날짜) : 일 추출
+
+-- EMPLOYEE 테이블에서
+-- 사원명, 입사일의 년,월,일을 조회
+SELECT EMP_NAME,
+    EXTRACT(YEAR FROM HIRE_DATE) 입사연도,
+    EXTRACT(MONTH FROM HIRE_DATE) 입사월,
+    EXTRACT(DAY FROM HIRE_DATE) 입사일
+FROM EMPLOYEE;
+
 
