@@ -91,12 +91,122 @@ WHERE DEPT_CODE = DEPT_ID;
 -- ANSI
 SELECT DEPT_TITLE, LOCAL_NAME
 FROM DEPARTMENT
-JOIN LOCATION ON(LOCATION_ID = LOCAL_CODE);
+/*INNER*/JOIN LOCATION ON(LOCATION_ID = LOCAL_CODE);
 
 -- ORACLE
 SELECT DEPT_TITLE, LOCAL_NAME
 FROM DEPARTMENT, LOCATION
 WHERE DEPARTMENT.LOCATION_ID = LOCATION.LOCAL_CODE;
+
+-- 2) 연결에 사용할 두 컬럼명이 같을 경우
+
+-- EMPLOYEE, JOB 테이블을 참조하여
+-- 사번, 이름, 직급코드, 직급명 조회
+
+-- ANSI
+-- 연결에 사용할 컬럼명이 같은 경우
+-- JOIN 테이블명 USING(같은컬럼명)
+SELECT EMP_ID, EMP_NAME, JOB_CODE, JOB_NAME
+FROM EMPLOYEE
+JOIN JOB USING(JOB_CODE);
+
+-- ORACLE
+-- 방법 1) 같은 컬럼명을 구분하기 위해 테이블명으로 구분
+SELECT EMP_ID, EMP_NAME, EMPLOYEE.JOB_CODE, JOB_NAME
+FROM EMPLOYEE, JOB
+WHERE EMPLOYEE.JOB_CODE = JOB.JOB_CODE;
+
+-- 방법 2) 테이블명에 별칭을 지정하여 구분하는데 사용
+SELECT EMP_ID, EMP_NAME, E.JOB_CODE, JOB_NAME
+FROM EMPLOYEE E, JOB J
+WHERE E.JOB_CODE = J.JOB_CODE;
+
+--------------------------------------------------------------------------------
+
+/*
+    2. 외부조인(OUTER JOIN) == (포괄 조인)
+    -- 두 테이블의 지정한 컬럼값이 일치하지 않는 행도 조인에 포함 시킴.
+    * OUTER JOIN은 반드시 명시해야함 안하면 지상렬   
+*/
+
+-- INNER JOIN과 OUTER JOIN을 비교하기 위한 SQL 구문
+SELECT EMP_NAME, DEPT_TITLE
+FROM EMPLOYEE
+JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID); -- 21명 조회됨
+
+-- 1) LEFT [OUTER] JOIN
+-- 합치기에 사용한 두 테이블 중 왼편에 기술된 테이블의 모든 컬럼을 기준으로 조인
+-- (NULL 제외하지 않음)
+
+-- ANSI
+SELECT EMP_NAME, DEPT_TITLE
+FROM EMPLOYEE
+LEFT /*OUTER*/ JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID);
+-- 23명(이오리, 하동운 추가)
+
+-- ORCALE (+)
+SELECT EMP_NAME, DEPT_TITLE
+FROM EMPLOYEE, DEPARTMENT
+WHERE DEPT_CODE = DEPT_ID(+);
+-- 왼쪽(DEPT_CODE)를 기준으로 하여 오른쪽(DEPT_ID)를 맞춰서 추가
+
+-- 2) RIGHT [OUTER] JOIN
+-- 합치기에 사용한 두 테이블 중 오른편에 기술된 테이블의 모든 컬럼을 기준으로 조인
+-- (NULL 제외하지 않음)
+
+--ANSI
+SELECT EMP_NAME, DEPT_TITLE
+FROM EMPLOYEE
+RIGHT /*OUTER*/ JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID);
+-- 24행 : 오른쪽에 조인되지 않았던
+-- 해외영업3부, 마케팅부, 국내영업부가 추가됨
+
+-- ORCALE (+)
+SELECT EMP_NAME, DEPT_TITLE
+FROM EMPLOYEE, DEPARTMENT
+WHERE DEPT_CODE(+) = DEPT_ID;
+
+-- 3) FULL [OUTER] JOIN
+-- 합치기에 사용한 두 테이블이 가진 모든 행을 결과에 포함
+-- LEFT 합집합 RIGHT
+
+-- ANSI
+SELECT EMP_NAME, DEPT_TITLE
+FROM EMPLOYEE
+FULL /*OUTER*/ JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID);
+
+-- ORACLE은 FULL OUTER 안됨
+SELECT EMP_NAME, DEPT_TITLE
+FROM EMPLOYEE, DEPARTMENT
+WHERE DEPT_CODE(+) = DEPT_ID(+);
+
+
+-- 3. 교차 조인(CROSS JOIN)(== DARTESIAN PRODUCT. 곱집합)
+-- 조인되는 테이블의 각 행들이 모두 매핑된 데이터가 검색되는 방법
+SELECT EMP_NAME FROM EMPLOYEE; -- 23행
+SELECT DEPT_TITLE FROM DEPARTMENT; -- 9행
+
+SELECT EMP_NAME, DEPT_TITLE
+FROM EMPLOYEE
+CROSS JOIN DEPARTMENT; -- 207행 = 23 * 9
+
+--------------------------------------------------------------------------------
+
+-- 4. 비등가 조인(NON EQAUL JOIN)
+-- '='(등호)를 사용하지 않는 조인문
+-- 지정한 컬럼 값이 일치하는 경우(등가)가 아닌
+-- 지정한 컬럼 값이 일정 범위 내에 포함되는 값일 경우 조인을 수행
+
+-- EMPLOYEE, SAL_GRADE를 참조하여
+-- 자신의 급여등급에 맞는 급여를 받고 있는 사람들의
+-- 이름, 급여, 급여 등급 조회
+
+SELECT EMP_NAME, SALARY, S.SAL_LEVEL
+FROM EMPLOYEE E
+JOIN SAL_GRADE S ON(SALARY BETWEEN MIN_SAL AND MAX_SAL);
+
+
+
 
 
 
