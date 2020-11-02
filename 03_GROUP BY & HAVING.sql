@@ -185,3 +185,122 @@ FROM EMPLOYEE
 GROUP BY ROLLUP(DEPT_CODE, JOB_CODE)
 ORDER BY 1;
 
+--------------------------------------------------------------------------------
+
+-- CUBE 집계 함수 : ROLLUP + 그룹으로 지정된 모든 그룹에 대한 집계 결과 추가
+
+SELECT DEPT_CODE, JOB_CODE, SUM(SALARY)
+FROM EMPLOYEE
+GROUP BY CUBE(DEPT_CODE, JOB_CODE)
+ORDER BY 1;
+
+--------------------------------------------------------------------------------
+
+-- GROUPING 함수
+-- ROLLUP, CUBE에 의한 산출물이
+-- 인자로 전달받을 컬럼 집합의 산출물이면 0
+-- 아니면 1을 반환하는 함수
+
+
+SELECT DEPT_CODE, JOB_CODE, SUM(SALARY),
+    GROUPING(DEPT_CODE) "부서별 그룹",
+    GROUPING(JOB_CODE) "직급별 그룹"
+FROM EMPLOYEE
+GROUP BY ROLLUP(DEPT_CODE, JOB_CODE)
+ORDER BY 1;
+
+
+SELECT DEPT_CODE, JOB_CODE, SUM(SALARY),
+    CASE WHEN GROUPING(DEPT_CODE) = 0 AND GROUPING(JOB_CODE) = 1 THEN '부서'
+         WHEN GROUPING(DEPT_CODE) = 1 AND GROUPING(JOB_CODE) = 0 THEN '직급'
+         WHEN GROUPING(DEPT_CODE) = 1 AND GROUPING(JOB_CODE) = 1 THEN '총합'
+         ELSE '부서+직급'
+    END "묶인 그룹"
+FROM EMPLOYEE
+GROUP BY CUBE(DEPT_CODE, JOB_CODE)
+ORDER BY 1;
+
+--------------------------------------------------------------------------------
+
+/*
+    집합 연산자(SET OPERATOR)
+    - 여러 SELECT문의 결과물(RESULT SET)을 하나로 만드는 연산자
+    - 서로 다은 조건에 의해 결과가 다른 SELECT문을 하나로 결합하고 싶을 때 사용.
+    - 사용법이 간단하여 초보자들이 사용하기 좋다.
+    
+    ** 주의사항
+    SELECT문의 SELECT절이 모두 동일해야 한다
+*/
+
+-- UNION(합집합) : RESULT SET을 하나로 합치는 연산자
+-- 중복되는 행은 한번만 조회됨.
+
+-- EMPLOYEE 테이블에서
+-- 부서코드가 'D5'인 직원 이거나
+-- 급여가 300만 초과인 직원의
+-- 사번, 이름, 부서코드, 급여를 조회
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D5'
+UNION
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE SALARY > 3000000;
+
+-- UNION은 OR 연산과 같은 결과를 반환함.
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D5' OR SALARY > 3000000;
+
+
+-- INTERSECT(교집합)
+-- RESULT SET중 공통되는 행만 조회
+
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D5'
+INTERSECT
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE SALARY > 3000000;
+
+-- INTERSECT은 AND 연산과 같은 결과를 반환함.
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D5' AND SALARY > 3000000;
+
+-- UNION ALL(합집합 + 교집합)
+
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D5'
+UNION ALL
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE SALARY > 3000000;
+
+-- MINUS(차집합) : 선행 RESULT SET에서 후행 RESULT SET과 일치하는 부분을 제거한다.
+-- 부서코드가 'D5'인 직원 중 급여가 300만원 초과인 사람을 제외한 결과를 조회
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D5'
+MINUS
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE SALARY > 3000000;
+
+-- 급여가 300만 초과인 사람들 중 부서코드가 'D5'인 사람들 제외한 결과를 조회
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE SALARY > 3000000
+MINUS
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D5';
+
+
+
+
+
+
+
