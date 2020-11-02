@@ -636,3 +636,21 @@ FROM EMPLOYEE
 WHERE SALARY >= 3000000;
 
 --------------------------------------------------------------------------------
+
+-- 1번 문제
+SELECT EMP_NAME, DEPT_CODE,
+    CASE WHEN DEPT_CODE = 'D5' THEN '총무부'
+         WHEN DEPT_CODE = 'D6' THEN '기획부'
+         WHEN DEPT_CODE = 'D9' THEN '영업부'
+    END 부서명
+FROM EMPLOYEE
+WHERE DEPT_CODE IN ('D5', 'D6', 'D9');
+
+-- 2번문제
+SELECT COUNT(*) 전체직원수,
+    COUNT(DECODE(EXTRACT(YEAR FROM HIRE_DATE), '2001', 1)) "2001년",
+    COUNT(DECODE(EXTRACT(YEAR FROM HIRE_DATE), '2002', 1)) "2002년",
+    COUNT(DECODE(EXTRACT(YEAR FROM HIRE_DATE), '2003', 1)) "2003년",
+    COUNT(DECODE(EXTRACT(YEAR FROM HIRE_DATE), '2004', 1)) "2004년"
+FROM EMPLOYEE;
+    
