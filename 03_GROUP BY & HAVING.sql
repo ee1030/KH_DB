@@ -76,12 +76,112 @@ GROUP BY DEPT_CODE;
 SELECT JOB_CODE "직급 코드", SUM(SALARY)"급여 합"
 FROM EMPLOYEE
 WHERE EXTRACT(YEAR FROM HIRE_DATE) >= 2000
+-- WHERE HIRE_DATE >= TO_DATE('20000101', 'YYYYMMDD')
 GROUP BY JOB_CODE
 ORDER BY JOB_CODE;
 
+--------------------------------------------------------------------------------
+
+-- 여러 컬럼을 묶어서 그룹으로 지정하는 경우
+
+-- EMPLOYEE 테이블에서
+-- 부서별로 특정 직급코드의 인원 수와 급여 합을
+-- 부서코드 오름차순, 직급코드 내림차순으로 조회
+SELECT DEPT_CODE, JOB_CODE, COUNT(*) "인원 수", SUM(SALARY) "급여 함"
+FROM EMPLOYEE
+GROUP BY DEPT_CODE, JOB_CODE
+ORDER BY DEPT_CODE, JOB_CODE DESC;
+
+-- ** GROUP BY절에 작성되지 않은 컬럼은 SELECT절에 작성할 수 없다~~!~!~!~!~!
+
+-- EMPLPYEE 테이블에서 부서 별로 급여 등급이 같은 직원의 수를
+-- 부서코드별 급여 등급 오름차순으로 정렬
+
+SELECT DEPT_CODE, SAL_LEVEL, COUNT(*) "인원 수"
+FROM EMPLOYEE
+GROUP BY DEPT_CODE, SAL_LEVEL
+ORDER BY DEPT_CODE, SAL_LEVEL;
+
+--------------------------------------------------------------------------------
+
+/*
+    HAVING 절 : 그룹에 대한 조건을 설정할 때 사용하는 구문
+    
+    HAVING 컬럼명 | 함수식
+*/
+
+-- EMPLOYEE 테이블에서 부서별 급여 평균이 3백만 이상인 부서를
+-- 부서코드 오름차순으로 조회
+SELECT DEPT_CODE, FLOOR(AVG(SALARY)) "부서 급여 평균"
+FROM EMPLOYEE
+GROUP BY DEPT_CODE
+HAVING FLOOR(AVG(SALARY)) >= 3000000
+ORDER BY DEPT_CODE;
+
+-- EMPLOYEE 테이블에서 부서별 급여 합이 9백만 초과인 부서를
+-- 부서코드 오름차순으로 조회
+SELECT DEPT_CODE, TO_CHAR(SUM(SALARY), 'L999,999,999') "급여 합"
+FROM EMPLOYEE
+GROUP BY DEPT_CODE
+HAVING SUM(SALARY) > 9000000
+ORDER BY DEPT_CODE;
+
+-- 1. EMPLOYEE 테이블에서 각 부서별 가장 높은 급여, 가장 낮은 급여를 조회하여
+-- 부서 코드 오름차순으로 정렬하세요.
+SELECT DEPT_CODE, MAX(SALARY) "최고 급여", MIN(SALARY) "최소 급여"
+FROM EMPLOYEE
+GROUP BY DEPT_CODE
+ORDER BY DEPT_CODE;
 
 
+-- 2. EMPLOYEE 테이블에서 각 직급별 보너스를 받는 사원의 수를 조회하여
+-- 직급코드 오름차순으로 정렬하세요
+SELECT JOB_CODE, COUNT(BONUS) "사원 수"
+FROM EMPLOYEE
+GROUP BY JOB_CODE
+ORDER BY JOB_CODE;
 
+-- 3. EMPLOYEE 테이블에서 
+-- 부서별 70년대생의 급여 평균이 300만 이상인 부서를 조회하여
+-- 부서 코드 오름차순으로 정렬하세요
+SELECT DEPT_CODE, TO_CHAR(FLOOR(AVG(SALARY)), 'L999,999,999') "급여 평균"
+FROM EMPLOYEE
+WHERE SUBSTR(EMP_NO, 1, 2) BETWEEN 70 AND 79
+GROUP BY DEPT_CODE
+HAVING FLOOR(AVG(SALARY)) >= 3000000
+ORDER BY DEPT_CODE;
 
+--------------------------------------------------------------------------------
 
+-- 집계함수
+-- 그룹 별 산출 결과를 계산하는 함수
+-- GROUP BY절에만 작성 가능한 함수
+
+-- EMPLOYEE 테이블에서 직급별 급여 합을
+-- 직급 코드 오름차순으로 조회
+SELECT JOB_CODE, SUM(SALARY)
+FROM EMPLOYEE
+GROUP BY JOB_CODE
+ORDER BY JOB_CODE;
+
+-- 모든 직원의 급여 합 조회
+SELECT SUM(SALARY) FROM EMPLOYEE;
+
+-- ROLLUP 집계 함수 : 
+-- 그룹별 '중간 집계'와 '전체 집계'를 계산하여 결과를 행에 자동 추가해주는 함수
+
+SELECT JOB_CODE, SUM(SALARY)
+FROM EMPLOYEE
+GROUP BY ROLLUP(JOB_CODE)
+ORDER BY JOB_CODE;
+
+-- EMPLOYEE 테이블에서
+-- 각 부서에 소속된 직급별 급여 합을 조회.
+-- 단, 부서별 급여 합,
+-- 직급별 급여 합,
+-- 전체 급여 합 결과를 추가
+SELECT DEPT_CODE, JOB_CODE, SUM(SALARY)
+FROM EMPLOYEE
+GROUP BY ROLLUP(DEPT_CODE, JOB_CODE)
+ORDER BY 1;
 
