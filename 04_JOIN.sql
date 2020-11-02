@@ -180,6 +180,7 @@ SELECT EMP_NAME, DEPT_TITLE
 FROM EMPLOYEE, DEPARTMENT
 WHERE DEPT_CODE(+) = DEPT_ID(+);
 
+--------------------------------------------------------------------------------
 
 -- 3. 교차 조인(CROSS JOIN)(== DARTESIAN PRODUCT. 곱집합)
 -- 조인되는 테이블의 각 행들이 모두 매핑된 데이터가 검색되는 방법
@@ -204,6 +205,57 @@ CROSS JOIN DEPARTMENT; -- 207행 = 23 * 9
 SELECT EMP_NAME, SALARY, S.SAL_LEVEL
 FROM EMPLOYEE E
 JOIN SAL_GRADE S ON(SALARY BETWEEN MIN_SAL AND MAX_SAL);
+
+--------------------------------------------------------------------------------
+
+-- 5. 자체 조인(SELF JOIN)
+-- 같은 테이블을 조인
+
+-- EMPLOYEE 테이블에서
+-- 사번, 이름, 관리자 사번, 관리자 이름 조회
+
+-- ANSI방식
+SELECT E.EMP_ID 사번, E.EMP_NAME 이름, E.MANAGER_ID 관리자사번, M.EMP_NAME 관리자이름
+FROM EMPLOYEE E
+-- JOIN EMPLOYEE M ON(E.MANAGER_ID = M.EMP_ID); -- 15행(INNER JOIN)
+LEFT JOIN EMPLOYEE M ON(E.MANAGER_ID = M.EMP_ID); -- 23행(LEFT OUTER JOIN)
+
+-- ORACLE 방식
+SELECT E.EMP_ID, E.EMP_NAME 사원이름, E.DEPT_CODE, E.MANAGER_ID, M.EMP_NAME 관리자이름
+FROM EMPLOYEE E, EMPLOYEE M
+-- WHERE E.MANAGER_ID = M.EMP_ID; -- 15행(등가 조인)
+WHERE E.MANAGER_ID = M.EMP_ID(+); -- 23행(왼쪽 포괄 조인)
+--------------------------------------------------------------------------------
+
+-- 6. 자연조인(NATURAL JOIN)
+-- 조인하려는 두 테이블이
+-- 동일한 타입과 이름을 가진 컬럼이 있다면 자동적으로 조인이 이루어지도록 하는 구문.
+-- * 반드시 동일한 타입과 이름의 컬럼이 있어야함.
+    --> 해당 조건이 만족되지 않으면 CROSS JOIN이 일어남.
+
+-- EMPLOYEE, JOB 테이블을 참조하여
+-- 사번, 이름, 직급코드, 직급명 조회
+
+-- ANSI
+SELECT EMP_ID, EMP_NAME, JOB_CODE, JOB_NAME
+FROM EMPLOYEE
+JOIN JOB USING(JOB_CODE);
+
+-- ORACLE
+SELECT EMP_ID, EMP_NAME, E.JOB_CODE, JOB_NAME
+FROM EMPLOYEE E, JOB J
+WHERE E.JOB_CODE = J.JOB_CODE;
+
+-- NATURAL JOIN
+SELECT EMP_ID, EMP_NAME, JOB_CODE, JOB_NAME
+FROM EMPLOYEE
+NATURAL JOIN JOB;
+
+-- 컬럼명 또는 데이터 타입이 다른 경우 크로스조인이 나타남
+SELECT EMP_ID, EMP_NAME, DEPT_TITLE
+FROM EMPLOYEE
+NATURAL JOIN DEPARTMENT;
+
 
 
 
