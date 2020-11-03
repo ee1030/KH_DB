@@ -440,11 +440,91 @@ SELECT EMP_NAME, JOB_CODE, FLOOR((SELECT AVG(SALARY)
                             WHERE E.JOB_CODE = M.JOB_CODE)) "직급 급여 평균"
 FROM EMPLOYEE E;
 
+--------------------------------------------------------------------------------
 
+-- 7. 인라인 뷰(INLINE VIEW)
+-- FROM절에 사용하는 서브쿼리
+-- 서브쿼리가 만든 결과의 집합(RESULT SET)을 테이블 대신 활용
 
+SELECT 사번, 급여
+FROM (SELECT EMP_ID 사번, EMP_NAME 이름, SALARY 급여
+      FROM EMPLOYEE
+      WHERE SALARY >= 3000000)
+WHERE 급여 < 4000000;
+      
 
+SELECT EMP_ID, EMP_NAME, SALARY
+FROM EMPLOYEE
+WHERE SALARY >= 3000000;
 
+-- 예제 7-1 : 인라인 뷰를 이용한 TOP-N 분석
 
+-- 전 직원 중 급여가 높은 상위 5명의
+-- 순위, 이름, 급여 조회
 
+-- * ROWNUM : 조회된 순서대로 1부터 1씩 증가하는 번호를 매기는 컬럼
 
+-- ROWNUM 주의사항1 : ORDER BY절보다 먼저 해석되어 번호를 부여함
+SELECT ROWNUM, EMP_NAME, SALARY
+FROM EMPLOYEE
+ORDER BY SALARY DESC;
 
+SELECT ROWNUM, EMP_NAME, SALARY
+FROM EMPLOYEE
+WHERE ROWNUM <= 5
+ORDER BY SALARY DESC;
+
+--> 인라인뷰 사용하기
+SELECT * FROM EMPLOYEE
+ORDER BY SALARY DESC;
+
+SELECT ROWNUM, EMP_NAME, SALARY
+FROM (SELECT *
+      FROM EMPLOYEE
+      ORDER BY SALARY DESC)
+WHERE ROWNUM <= 5;
+
+-- 예제 7-2.
+-- 급여 평균이 3위 안에 드는 부서의 부서코드, 부서명, 급여 평균 조회
+SELECT ROWNUM, DEPT_CODE, DEPT_TITLE, 평균
+FROM(SELECT DEPT_CODE, DEPT_TITLE, FLOOR(AVG(SALARY)) 평균
+     FROM EMPLOYEE
+     JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+     GROUP BY DEPT_CODE, DEPT_TITLE
+     ORDER BY AVG(SALARY) DESC)
+WHERE ROWNUM <= 3;
+
+--------------------------------------------------------------------------------
+
+-- 8. WITH
+-- 서브쿼리에 이름을 붙여주고 사용시 이름을 호출하게함.
+-- 주로 인라인 뷰로 사용될 서브쿼리에 사용함.
+-- 실행속도도 빨라짐.
+
+-- 전 직원의 급여 순위 TOP 10 조회
+
+WITH TOPN_SAL AS(SELECT EMP_ID, EMP_NAME, SALARY
+                 FROM EMPLOYEE
+                 ORDER BY SALARY DESC)
+SELECT ROWNUM, EMP_ID, EMP_NAME, SALARY
+FROM TOPN_SAL
+WHERE ROWNUM <= 10;
+
+--------------------------------------------------------------------------------
+
+-- 9. RANK() OVER / DENSE_RACK() OVER
+
+-- RANK() OVER : 동일한 순위 이후 등수를 동일한 인원 수 만큼 건너 뛰고 순위 계산
+                    -- EX) 공동 1위가 2명이면 다음 순위는 3위
+                    
+-- DENSE_RACK() OVER : 동일한 순위 이후 등수를 건너 뛰지 않고 순위 계산
+                    -- EX) 공동 1위가 2명이면 다음 순위는 2위
+                    
+-- 전체 급여 순위
+SELECT EMP_NAME, SALARY,
+    RANK() OVER(ORDER BY SALARY DESC) 순위 -- 급여 내림차순으로 순위 부여
+FROM EMPLOYEE;
+
+SELECT EMP_NAME, SALARY,
+    DENSE_RANK() OVER(ORDER BY SALARY DESC) 순위 -- 급여 내림차순으로 순위 부여
+FROM EMPLOYEE;
