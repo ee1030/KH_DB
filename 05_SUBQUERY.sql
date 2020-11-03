@@ -125,6 +125,7 @@ GROUP BY DEPT_TITLE
 HAVING SUM(SALARY) = (SELECT MAX(SUM(SALARY)) FROM EMPLOYEE GROUP BY DEPT_CODE);
 
 --------------------------------------------------------------------------------
+
 /*
     2. 다중행 서브쿼리(MULTI ROW SUBQUERY)
     - 서브쿼리의 조회 결과 행의 개수가 여러 개인 서브쿼리
@@ -228,7 +229,128 @@ SELECT EMP_ID, EMP_NAME, DEPT_TITLE, JOB_NAME,
 FROM EMPLOYEE
 NATURAL JOIN JOB
 LEFT JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+ORDER BY 1;
 
+-- 예제 2-3
+-- 대리 직급의 직원들 중에서 과장 직급의 최소 급여보다 많이 받는 직원의
+-- 사번, 이름, 직급, 급여를 조회
+
+-- 1) 직급이 '대리'인 직원의 사번, 이름, 직급명, 급여 조회
+SELECT EMP_ID, EMP_NAME, JOB_NAME, SALARY
+FROM EMPLOYEE
+NATURAL JOIN JOB
+WHERE JOB_NAME = '대리';
+
+-- 2) 직급이 과장인 직원들의 급여 조회
+SELECT SALARY
+FROM EMPLOYEE
+NATURAL JOIN JOB
+WHERE JOB_NAME = '과장';
+
+-- 3) MIN을 이용하여 조회
+SELECT EMP_ID, EMP_NAME, JOB_NAME, SALARY
+FROM EMPLOYEE
+NATURAL JOIN JOB
+WHERE JOB_NAME = '대리'
+AND SALARY > (SELECT MIN(SALARY)
+              FROM EMPLOYEE
+              NATURAL JOIN JOB
+              WHERE JOB_NAME = '과장');
+
+-- 4) > ANY를 이용하여 과장 중 가장 적은 급여보다 초과해서 받는 대리
+SELECT EMP_ID, EMP_NAME, JOB_NAME, SALARY
+FROM EMPLOYEE
+NATURAL JOIN JOB
+WHERE JOB_NAME = '대리'
+AND SALARY > ANY (SELECT SALARY
+              FROM EMPLOYEE
+              NATURAL JOIN JOB
+              WHERE JOB_NAME = '과장');
+
+-- 예제 2-4
+-- 차장 직급을 가진 직원들 중 가장 많이 받는 차장 보다
+-- 더 많이 받는 과장의 사번, 이름, 직급, 급여 조회
+-- (> ALL, < ALL)
+SELECT EMP_ID, EMP_NAME, JOB_NAME, SALARY
+FROM EMPLOYEE
+NATURAL JOIN JOB
+WHERE JOB_NAME = '과장'
+AND SALARY > ALL (SELECT SALARY
+                  FROM EMPLOYEE
+                  NATURAL JOIN JOB
+                  WHERE JOB_NAME = '차장');
+
+-- 서브쿼리 응용 예제
+
+-- LOCATION 테이블에서 NATIONAL_CODE가 KO인 경우의 LOCAL_CODE와
+-- DEPARTMENT 테이블의 LOCATION_ID와 동일한 DEPT_ID가 
+-- EMPLOYEE테이블의 DEPT_CODE와 동일한 사원을 구하시오.
+
+-- 1) LOCATION 테이블에서 NATIONAL_CODE가 KO인 경우의 LOCAL_CODE
+SELECT LOCAL_CODE
+FROM LOCATION
+WHERE NATIONAL_CODE = 'KO';
+
+-- 2) DEPARTMENT 테이블의 LOCATION_ID와 동일한 DEPT_ID
+SELECT DEPT_ID
+FROM DEPARTMENT
+WHERE LOCATION_ID = (SELECT LOCAL_CODE
+                     FROM LOCATION
+                     WHERE NATIONAL_CODE = 'KO');
+                     
+
+-- 3) EMPLOYEE 테이블의 DEPT_CODE와 동일한 사원정보 조회                     
+SELECT *
+FROM EMPLOYEE
+WHERE DEPT_CODE IN (SELECT DEPT_ID
+                    FROM DEPARTMENT
+                    WHERE LOCATION_ID = (SELECT LOCAL_CODE
+                                         FROM LOCATION
+                                         WHERE NATIONAL_CODE = 'KO'));
+                                         --> 다중행 서브쿼리
+
+--------------------------------------------------------------------------------
+
+/*
+    3. 다중열 서브쿼리(MULTI COLUMN SUBQUERY)
+    - 서브쿼리 SELECT절에 나열된 컬럼 수가 여러 개인 서브쿼리
+*/
+
+-- 퇴사한 여직원과 같은 부서, 같은 직급에 해당하는
+-- 사원의 이름, 직급, 부서, 입사일을 조회
+
+-- 1) 퇴사한 여직원의 이름, 부서코드, 직급코드 조회
+SELECT EMP_NAME, DEPT_CODE, JOB_CODE
+FROM EMPLOYEE
+WHERE ENT_YN = 'Y'
+AND SUBSTR(EMP_NO, 8, 1) = '2';
+
+-- 2) 퇴사한 직원과 같은 부서, 같은 직급
+SELECT EMP_NAME, JOB_CODE, DEPT_CODE, HIRE_DATE
+FROM EMPLOYEE
+WHERE 
+    -- 같은 부서 
+    DEPT_CODE = (SELECT DEPT_CODE
+                 FROM EMPLOYEE
+                 WHERE ENT_YN = 'Y'
+                 AND SUBSTR(EMP_NO, 8, 1) = '2')
+AND
+    -- 같은 직급
+    JOB_CODE = (SELECT JOB_CODE
+                 FROM EMPLOYEE
+                 WHERE ENT_YN = 'Y'
+                 AND SUBSTR(EMP_NO, 8, 1) = '2')
+AND 
+    ENT_YN != 'Y';
+
+-- 3) 다중열 서브쿼리로 작성
+SELECT EMP_NAME, JOB_CODE, DEPT_CODE, HIRE_DATE
+FROM EMPLOYEE
+WHERE (DEPT_CODE, JOB_CODE) = (SELECT DEPT_CODE, JOB_CODE
+                                 FROM EMPLOYEE
+                                 WHERE ENT_YN = 'Y'
+                                 AND SUBSTR(EMP_NO, 8, 1) = '2')
+AND ENT_YN != 'Y';
 
 
 
