@@ -98,6 +98,138 @@ FROM EMPLOYEE
 JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
 WHERE SALARY > (SELECT SALARY FROM EMPLOYEE WHERE EMP_NAME = '노옹철');
 
+-- ** 서브쿼리는 WHERE절 뿐만 아니라
+-- SELECT, FROM, HAVING절에 작성 가능함.
+
+-- 예제 1-4
+-- 부서별(부서 없는 사람 포함) 급여의 합계가
+-- 가장 큰 부서의 부서명, 급여 합 조회
+
+-- 1)부서별 급여 합 중 가장 큰 값을 조회
+SELECT MAX(SUM(SALARY) )
+FROM EMPLOYEE
+GROUP BY DEPT_CODE;
+
+-- 2) 부서별 급여 합이 17700000원인 부서의 부서명과 급여 합 조회
+SELECT DEPT_TITLE, SUM(SALARY) "급여 합"
+FROM EMPLOYEE
+LEFT JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+GROUP BY DEPT_TITLE
+HAVING SUM(SALARY) = 17700000;
+
+-- 1, 2 합치기
+SELECT DEPT_TITLE, SUM(SALARY)
+FROM EMPLOYEE
+LEFT JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+GROUP BY DEPT_TITLE
+HAVING SUM(SALARY) = (SELECT MAX(SUM(SALARY)) FROM EMPLOYEE GROUP BY DEPT_CODE);
+
+--------------------------------------------------------------------------------
+/*
+    2. 다중행 서브쿼리(MULTI ROW SUBQUERY)
+    - 서브쿼리의 조회 결과 행의 개수가 여러 개인 서브쿼리
+    
+    - ** 다중행 서브쿼리에는 일반 비교연산자를 사용할 수 없음.
+        
+        IN / NOT IN : 여러개의 결과 값중 하나라도 일치하는 값이 있다면 / 없다면
+        
+        > ANY, < ANY : 여러개의 결과값 중
+                        하나라도 큰 / 작은 경우
+                        -> 가장 작은 값보다 큰가? 
+                            / 가장 큰 값보다 작은가?
+                        
+        > ALL, < ALL : 여러개의 결과값 중
+                        모든 값보다 큰 / 작은 경우
+                        -> 가장 큰 값보다 큰가? 
+                            / 가장 작은값 보다 작은가
+        
+        EXISTS / NOT EXISTS : 값이 존재 하는가? / 존재하지 않는가?
+*/
+
+-- 예제 2-1
+-- 부서별 최고 급여를 받는 직원의
+-- 이름, 부서명, 직급명, 급여를 조회
+
+-- 1) 각 부서별 최고 급여 조회
+SELECT MAX(SALARY)
+FROM EMPLOYEE
+GROUP BY DEPT_CODE;
+
+-- 2) 전체 사원 중 각 부서별 최고 급여와 일치하는 사원의
+-- 이름, 부서명, 직급명, 급여를 조회
+SELECT EMP_NAME, DEPT_TITLE, JOB_NAME, SALARY
+FROM EMPLOYEE
+JOIN JOB USING(JOB_CODE)
+LEFT JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+WHERE SALARY IN(2890000, 3660000, 8000000, 3760000, 3900000, 2490000, 2550000);
+
+
+
+SELECT EMP_NAME, DEPT_TITLE, JOB_NAME, SALARY
+FROM EMPLOYEE
+LEFT JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+JOIN JOB USING(JOB_CODE)
+WHERE SALARY IN(SELECT MAX(SALARY) FROM EMPLOYEE GROUP BY DEPT_CODE);
+
+-- 예제 2-2
+-- 모든 사원에 대해 관리자/직원을 구분하여
+-- 사번, 이름, 부서명, 직급명, 구분(관리자/직원)을 조회
+
+-- 1) 관리자에 해당하는 사번을 모두 조회
+SELECT DISTINCT MANAGER_ID
+FROM EMPLOYEE
+WHERE MANAGER_ID IS NOT NULL;
+
+-- 2) 관리자에 해당하는 직원의 
+-- 사번, 이름, 부서명, 직급명, 구분(관리자/직원)을 조회
+SELECT EMP_ID, EMP_NAME, DEPT_TITLE, JOB_NAME, '관리자' 구분
+FROM EMPLOYEE
+NATURAL JOIN JOB
+LEFT JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+WHERE EMP_ID IN(SELECT DISTINCT MANAGER_ID
+                FROM EMPLOYEE
+                WHERE MANAGER_ID IS NOT NULL);
+
+-- 3) 직원에 해당하는 사원의
+-- 사번, 이름, 부서명, 직급명, 구분(관리자/직원)을 조회
+SELECT EMP_ID, EMP_NAME, DEPT_TITLE, JOB_NAME, '직원' 구분
+FROM EMPLOYEE
+NATURAL JOIN JOB
+LEFT JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+WHERE EMP_ID NOT IN(SELECT DISTINCT MANAGER_ID
+                FROM EMPLOYEE
+                WHERE MANAGER_ID IS NOT NULL);
+
+-- 4) 2, 3 조회 결과를 하나로 합침
+
+SELECT EMP_ID, EMP_NAME, DEPT_TITLE, JOB_NAME, '관리자' 구분
+FROM EMPLOYEE
+NATURAL JOIN JOB
+LEFT JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+WHERE EMP_ID IN(SELECT DISTINCT MANAGER_ID
+                FROM EMPLOYEE
+                WHERE MANAGER_ID IS NOT NULL)
+UNION
+SELECT EMP_ID, EMP_NAME, DEPT_TITLE, JOB_NAME, '직원' 구분
+FROM EMPLOYEE
+NATURAL JOIN JOB
+LEFT JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+WHERE EMP_ID NOT IN(SELECT DISTINCT MANAGER_ID
+                FROM EMPLOYEE
+                WHERE MANAGER_ID IS NOT NULL);
+
+-- 5) SELECT절에 서브쿼리 사용한 형태
+SELECT EMP_ID, EMP_NAME, DEPT_TITLE, JOB_NAME,
+    CASE WHEN EMP_ID IN (SELECT DISTINCT MANAGER_ID
+                         FROM EMPLOYEE
+                         WHERE MANAGER_ID IS NOT NULL) THEN '관리자'
+         ELSE '직원'
+    END 구분
+FROM EMPLOYEE
+NATURAL JOIN JOB
+LEFT JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+
+
 
 
 
