@@ -382,11 +382,69 @@ WHERE (JOB_CODE, SALARY) IN
 -- 사번, 사원명, 부서코드, 급여
 SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
 FROM EMPLOYEE
-WHERE (DEPT_CODE, SALARY) IN 
-                    (SELECT DEPT_CODE, MAX(SALARY)
+WHERE (NVL(DEPT_CODE, 0), SALARY) IN 
+                    (SELECT NVL(DEPT_CODE, 0), MAX(SALARY)
                      FROM EMPLOYEE
                      GROUP BY DEPT_CODE)
 ORDER BY DEPT_CODE;
+-- 다중열 서브쿼리 연산시 NULL 데이터가 하나라도 있으면 조회되지 않음.
+
+--------------------------------------------------------------------------------
+
+-- 5. 상관 서브쿼리(상호연관 서브쿼리)
+-- 상관 쿼리는 메인 쿼리가 사용하는 테이블 값을 서브 쿼리가 이용해서 결과를 만듦.
+-- 메인쿼리의 테이블 값이 변경되면 서브쿼리 결과 값도 변경되는 구조.
+
+-- ** 상관쿼리는 먼저 메인쿼리의 한 행을 조회하고
+-- 해당 행이 서브쿼리의 조건을 충족하는지 확인하여 SELECT를 진행함.
+
+-- 예제 5-1.
+-- 관리자가 EMPLOYEE 테이블에 있는 직원의 사번, 이름, 부서명, 관리자 번호 조회
+SELECT EMP_ID, EMP_NAME, DEPT_TITLE, MANAGER_ID
+FROM EMPLOYEE E
+LEFT JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+-- EXISTS : 서브쿼리에 해당하는 행이 적어도 1개 이상 존재할 경우 충족되는 SELECT가 실행
+WHERE EXISTS (SELECT EMP_ID
+              FROM EMPLOYEE M
+              WHERE E.MANAGER_ID = M.EMP_ID);
+              
+-- 예제 5-2.
+-- 직급별 급여 평균보다 급여를 많이 받는 직원의
+-- 이름, 직급코드, 급여 조회
+SELECT EMP_NAME, JOB_CODE, SALARY
+FROM EMPLOYEE E
+WHERE SALARY > (SELECT AVG(SALARY)
+                FROM EMPLOYEE M
+                WHERE E.JOB_CODE = M.JOB_CODE);
+                
+--------------------------------------------------------------------------------
+
+-- 6. 스칼라 서브쿼리
+-- SELECT절에 사용되는 단일행 서브쿼리(1행)
+-- SQL에서는 단일 값을 가리켜 '스칼라'라고 함.
+
+-- 예제 6-1.
+-- 모든 사원의 사번, 이름, 관리자번호, 관리자명을 조회
+-- 단, 관리자가 없는 경우 '없음'으로 표시
+SELECT EMP_ID, EMP_NAME, MANAGER_ID,
+        NVL((SELECT M.EMP_NAME
+            FROM EMPLOYEE M
+            WHERE E.MANAGER_ID = M.EMP_ID), '없음') 관리자명
+FROM EMPLOYEE E
+ORDER BY 1;
+
+-- 예제 6-2.
+-- 각 직원들이 속한 직급의 급여 평균을 조회(소수점 아래 내림)
+SELECT EMP_NAME, JOB_CODE, FLOOR((SELECT AVG(SALARY)
+                            FROM EMPLOYEE M
+                            WHERE E.JOB_CODE = M.JOB_CODE)) "직급 급여 평균"
+FROM EMPLOYEE E;
+
+
+
+
+
+
 
 
 
