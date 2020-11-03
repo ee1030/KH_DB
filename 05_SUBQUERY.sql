@@ -352,6 +352,41 @@ WHERE (DEPT_CODE, JOB_CODE) = (SELECT DEPT_CODE, JOB_CODE
                                  AND SUBSTR(EMP_NO, 8, 1) = '2')
 AND ENT_YN != 'Y';
 
+--------------------------------------------------------------------------------
+
+-- 4. 다중행 다중열 서브쿼리
+
+-- 본인 직급의 평균 급여를 받고 있는 직원의
+-- 사번, 이름, 직급코드, 급여를 조회
+-- 단, 급여와 급여 평균은 만원 단위까지만 계산. (TRUNC(컬럼명, -4))
+
+-- 1) 급여를 200, 600만 받는 직원을 조회
+SELECT EMP_ID, EMP_NAME, JOB_CODE, SALARY
+FROM EMPLOYEE
+WHERE SALARY IN (2000000, 6000000);
+
+-- 2) 직급별 평균 급여(만원 단위까지만 계산)
+SELECT JOB_CODE, TRUNC(AVG(SALARY), -4)
+FROM EMPLOYEE
+GROUP BY JOB_CODE; --> 서브쿼리
+
+-- 3) 1, 2 쿼리를 하나로 합침
+SELECT EMP_ID, EMP_NAME, JOB_CODE, SALARY
+FROM EMPLOYEE
+WHERE (JOB_CODE, SALARY) IN 
+                (SELECT JOB_CODE, TRUNC(AVG(SALARY), -4)
+                 FROM EMPLOYEE
+                 GROUP BY JOB_CODE);
+
+-- 각 부서별 최고 급여를 받는 사원을 조회하시오(단, 부서별 오름차순 정렬 하시오)
+-- 사번, 사원명, 부서코드, 급여
+SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE (DEPT_CODE, SALARY) IN 
+                    (SELECT DEPT_CODE, MAX(SALARY)
+                     FROM EMPLOYEE
+                     GROUP BY DEPT_CODE)
+ORDER BY DEPT_CODE;
 
 
 
