@@ -205,9 +205,543 @@ INSERT INTO USER_NN
 VALUES(1, 'USER01', 'PASS01', '김영주', '남', '010-1111-2222', 'USER01@naver.com');
 
 INSERT INTO USER_NN 
+VALUES(2, NULL, NULL, NULL, '남', '010-1111-2222', 'USER01@naver.com');
+--> 제약조건 위배되서 오류남
+
+INSERT INTO USER_NN 
 VALUES(2, 'USER02', 'PASS02', NULL, '남', '010-1111-2222', 'USER01@naver.com');
 
+--------------------------------------------------------------------------------
 
+/* 2. UNIQUE 제약 조건
+
+*/
+
+
+-- USER_NN 테이블에 중복 데이터 삽입(성공? 실패?)
+
+
+-- 1) 컬럼 레벨로  UNIQUE 제약 조건 설정
+
+-- UNIQUE 제약 조건 테이블 생성
+CREATE TABLE USER_UK(
+    USER_NO NUMBER,
+    USER_ID VARCHAR2(20),
+    USER_PWD VARCHAR2(20) NOT NULL,
+    USER_NAME VARCHAR2(30),
+    GENDER CHAR(3),
+    PHONE VARCHAR2(30),
+    EMAIL VARCHAR2(50)
+);
+
+
+
+-- 삽입을 순서대로 하나씩 진행
+INSERT INTO USER_UK
+VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+
+
+INSERT INTO USER_UK
+VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+
+
+INSERT INTO USER_UK
+VALUES(1, NULL, 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+
+
+INSERT INTO USER_UK
+VALUES(1, NULL, 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+
+
+-- 삽입 결과 확인
+SELECT  * FROM USER_USED_UK; 
+
+
+-- 오류 보고에 나타나는 SYS_C008635 같은 제약 조건명으로
+-- 해당 제약 조건이 설정된 테이블명, 컬럼, 제약 조건 타입 조회 
+SELECT UCC.TABLE_NAME, UCC.COLUMN_NAME, UC.CONSTRAINT_TYPE
+FROM USER_CONSTRAINTS UC, USER_CONS_COLUMNS UCC
+WHERE UCC.CONSTRAINT_NAME = UC.CONSTRAINT_NAME
+AND UCC.CONSTRAINT_NAME = 'SYS_C0012215';
+
+
+--------------------------------------------
+
+-- 2) 테이블 레벨에서 제약 조건 설정
+
+
+/* [작성법]
+	
+	
+*/
+
+
+CREATE TABLE USER_UK2(
+    USER_NO NUMBER,
+    USER_ID VARCHAR2(20),
+    USER_PWD VARCHAR2(20) NOT NULL,
+    USER_NAME VARCHAR2(30),
+    GENDER CHAR(3),
+    PHONE VARCHAR2(30),
+    EMAIL VARCHAR2(50)
+);
+
+
+-- USER_UK2 테이블에 설정된 제약조건 조회
+SELECT C1.TABLE_NAME,  COLUMN_NAME  ,SEARCH_CONDITION
+FROM USER_CONSTRAINTS  C1 
+JOIN USER_CONS_COLUMNS C2 USING(CONSTRAINT_NAME)
+WHERE C1.TABLE_NAME = 'USER_UK2';
+
+
+-- 데이터를 삽입하여 UNIQUE 제약 조건 확인
+INSERT INTO USER_UK2
+VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+
+INSERT INTO USER_UK2
+VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+
+SELECT * FROM USER_UK2;
+
+
+
+--------------------------------------------
+
+-- 3) UNIQUE 복합키
+
+
+CREATE TABLE USER_UK3(
+    USER_NO NUMBER,
+    USER_ID VARCHAR2(20),
+    USER_PWD VARCHAR2(20) NOT NULL,
+    USER_NAME VARCHAR2(30),
+    GENDER CHAR(3),
+    PHONE VARCHAR2(30),
+    EMAIL VARCHAR2(50)
+);
+
+
+
+
+INSERT INTO USER_UK3
+VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+
+INSERT INTO USER_UK3
+VALUES(2, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+
+INSERT INTO USER_UK3
+VALUES(2, 'user02', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+
+INSERT INTO USER_UK3
+VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+--> 여러 컬럼을 묶어서 UNIQUE 제약 조건이 설정되어 있으면 
+-- 두 컬럼이 모두 중복되는 값일 경우에만 오류 발생
+
+SELECT * FROM USER_UK3;
+
+
+SELECT UC.TABLE_NAME, UCC.COLUMN_NAME, UCC.CONSTRAINT_NAME, UC.CONSTRAINT_TYPE
+FROM USER_CONSTRAINTS UC
+JOIN USER_CONS_COLUMNS UCC ON(UC.CONSTRAINT_NAME = UCC.CONSTRAINT_NAME)
+WHERE UCC.CONSTRAINT_NAME = 'SYS_C0012220';
+--> 두개의 UNIQUE 제약 조전이이 하나의 제약 조건명으로 되어있는 것 확인
+
+
+
+------------------------------------------------------------------------------------------
+
+
+-- 제약조건에 이름 설정
+CREATE TABLE CONST_NAME(
+  TEST_DATA1 VARCHAR2(20) CONSTRAINT NN_TEST_DATA1 NOT NULL, 
+  TEST_DATA2 VARCHAR2(20) CONSTRAINT UK_TEST_DATA2 UNIQUE,
+  TEST_DATA3 VARCHAR2(30),
+  CONSTRAINT UK_TEST_DATA3 UNIQUE(TEST_DATA3)
+);
+-- TEST_DATA1 컬럼에 컬럼 레벨로 NOT_NULL 제약조건을 추가하고 제약 조건 명을 NN_TEST_DATA1으로 지정
+-- TEST_DATA2 컬럼에 컬럼 레벨로 UNIQUE 제약조건을 추가하고 제약 조건 명을 UK_TEST_DATA2 지정
+-- TEST_DATA3 컬럼에 테이블 레벨로 UNIQUE 제약조건을 추가하고 제약 조건 명을 UK_TEST_DATA3 지정
+
+SELECT * FROM USER_CONSTRAINTS
+WHERE TABLE_NAME = 'CONST_NAME';
+
+SELECT * 
+FROM USER_CONSTRAINTS C1
+JOIN USER_CONS_COLUMNS C2 USING(CONSTRAINT_NAME)
+WHERE C1.TABLE_NAME = 'CONS_NAME';
+
+
+------------------------------------------------------------------------------------------
+
+
+/* 3. PRIMARY KEY(기본키) 제약 조건 
+
+
+*/
+
+-- 1) PRIMARY KEY가 설정된 테이블 생성
+
+CREATE TABLE USER_PK(
+  USER_NO NUMBER,
+  USER_ID VARCHAR2(20) UNIQUE,
+  USER_PWD VARCHAR2(30) NOT NULL,
+  USER_NAME VARCHAR2(30),
+  GENDER CHAR(3),
+  PHONE VARCHAR2(30),
+  EMAIL VARCHAR2(50)
+);
+
+
+-- 순서 대로 삽입 하면서 확인
+INSERT INTO USER_USED_PK
+VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+
+INSERT INTO USER_USED_PK
+VALUES(1, 'user02', 'pass02', '이순신', '남', '010-5678-9012', 'lee123@kh.or.kr');
+
+INSERT INTO USER_USED_PK
+VALUES(NULL, 'user03', 'pass03', '유관순', '여', '010-9999-3131', 'yoo123@kh.or.kr');
+
+
+
+-- PK_USER_NO 제약조건 확인
+SELECT UC.TABLE_NAME, UCC.COLUMN_NAME, UC.CONSTRAINT_NAME, UC.CONSTRAINT_TYPE
+FROM USER_CONSTRAINTS UC
+JOIN USER_CONS_COLUMNS UCC ON(UC.CONSTRAINT_NAME = UCC.CONSTRAINT_NAME)
+WHERE UC.CONSTRAINT_NAME = 'PK_USER_NO';
+
+
+--------------------------------------------
+
+-- 2) PRIMARY KEY 복합키
+
+CREATE TABLE USER_PK2(
+  USER_NO NUMBER,
+  USER_ID VARCHAR2(20),
+  USER_PWD VARCHAR2(30) NOT NULL,
+  USER_NAME VARCHAR2(30),
+  GENDER CHAR(3),
+  PHONE VARCHAR2(30),
+  EMAIL VARCHAR2(50)
+);
+
+-- 순서 대로 삽입 하면서 확인
+INSERT INTO USER_PK2
+VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+
+INSERT INTO USER_PK2
+VALUES(1, 'user02', 'pass02', '이순신', '남', '010-5678-9012', 'lee123@kh.or.kr');
+
+INSERT INTO USER_PK2
+VALUES(2, 'user01', 'pass01', '유관순', '여', '010-9999-3131', 'yoo123@kh.or.kr');
+
+INSERT INTO USER_PK2
+VALUES(1, 'user01', 'pass01', '신사임당', '여', '010-9999-9999', 'sin123@kh.or.kr');
+
+SELECT * FROM USER_PK2;
+
+
+
+------------------------------------------------------------------------------------------
+
+
+/* 4. FOREIGN KEY(외부키 / 외래키) 제약조건 
+
+
+*/
+-- 1) FOREIGN KEY 제약 조건 설정
+
+-- FOREIGN KEY 제약조건 확인을 위한 테이블, 샘플데이터
+CREATE TABLE USER_GRADE(
+  GRADE_CODE NUMBER PRIMARY KEY,
+  GRADE_NAME VARCHAR2(30) NOT NULL
+);
+INSERT INTO USER_GRADE VALUES (10, '일반회원');
+INSERT INTO USER_GRADE VALUES (20, '우수회원');
+INSERT INTO USER_GRADE VALUES (30, '특별회원');
+
+SELECT * FROM USER_GRADE;
+
+
+-- USER_GRADE테이블과 FOREIGN KEY 제약조건이 맺어진 테이블 생성
+CREATE TABLE USER_FK(
+  USER_NO NUMBER PRIMARY KEY,
+  USER_ID VARCHAR2(20) UNIQUE,
+  USER_PWD VARCHAR2(30) NOT NULL,
+  USER_NAME VARCHAR2(30),
+  GENDER CHAR(3),
+  PHONE VARCHAR2(30),
+  EMAIL VARCHAR2(50),
+  GRADE_CODE NUMBER
+);
+
+
+
+-- 순서 대로 삽입 하면서 확인
+INSERT INTO USER_FK
+VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr', 10);
+
+INSERT INTO USER_USED_FK
+VALUES(2, 'user02', 'pass02', '이순신', '남', '010-5678-9012', 'lee123@kh.or.kr', 10);
+
+INSERT INTO USER_USED_FK
+VALUES(3, 'user03', 'pass03', '유관순', '여', '010-9999-3131', 'yoo123@kh.or.kr', 30);
+
+INSERT INTO USER_USED_FK
+VALUES(4, 'user04', 'pass04', '안중근', '남', '010-2222-1111', 'ahn123@kh.or.kr', null);
+
+SELECT * FROM USER_USED_FK;
+
+INSERT INTO USER_USED_FK
+VALUES(5, 'user05', 'pass05', '윤봉길', '남', '010-6666-1234', 'yoon123@kh.or.kr', 50);
+
+
+
+-- 설정된 제약조건 확인
+SELECT UC.TABLE_NAME, UCC.COLUMN_NAME, UC.CONSTRAINT_NAME, UC.CONSTRAINT_TYPE
+FROM USER_CONSTRAINTS UC
+JOIN USER_CONS_COLUMNS UCC ON (UC.CONSTRAINT_NAME = UCC.CONSTRAINT_NAME)
+WHERE UC.CONSTRAINT_NAME = 'FK_GRADE_CODE';
+
+
+
+--------------------------------------------
+
+
+-- 2) FOREIGN KEY 삭제 옵션 
+-- 부모테이블의 데이터 삭제시 자식 테이블의 데이터를 
+-- 어떤식으로 처리할 지에 대한 내용을 설정할 수 있다.
+
+-- 2-1) ON DELETE RESTRICTED(삭제 제한)로 기본 지정되어 있음
+-- FOREIGN KEY로 지정된 컬럼에서 사용되고 있는 값일 경우
+-- 제공하는 컬럼의 값은 삭제하지 못함
+
+SELECT * FROM USER_GRADE;
+
+DELETE FROM USER_GRADE WHERE GRADE_CODE = 10; -- 삭제 구문
+
+
+COMMIT;
+
+
+DELETE FROM USER_GRADE WHERE GRADE_CODE = 20;
+-- GRADE_CODE 중 20은 외래키로 참조되고 있지 않으므로 삭제가 가능함.
+
+SELECT * FROM USER_GRADE;
+
+ROLLBACK;
+
+
+
+---------------------
+
+
+-- 2-2)ON DELETE SET NULL 
+
+
+
+-- 삭제 조건 확인을 위한 테이블, 샘플 데이터
+CREATE TABLE USER_GRADE2(
+  GRADE_CODE NUMBER PRIMARY KEY,
+  GRADE_NAME VARCHAR2(30) NOT NULL
+);
+
+INSERT INTO USER_GRADE2
+VALUES (10, '일반회원');
+INSERT INTO USER_GRADE2
+VALUES (20, '우수회원');
+INSERT INTO USER_GRADE2
+VALUES (30, '특별회원');
+
+SELECT * FROM USER_GRADE2;
+
+
+-- ON DELETE SET NULL 삭제 옵션을 추가한 테이블 생성
+CREATE TABLE USER_FK2(
+  USER_NO NUMBER PRIMARY KEY,
+  USER_ID VARCHAR2(20) UNIQUE,
+  USER_PWD VARCHAR2(30) NOT NULL,
+  USER_NAME VARCHAR2(30),
+  GENDER CHAR(3),
+  PHONE VARCHAR2(30),
+  EMAIL VARCHAR2(50),
+  GRADE_CODE NUMBER
+ );
+
+-- 샘플데이터 삽입
+INSERT INTO USER_FK2
+VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr', 10);
+
+INSERT INTO USER_FK2
+VALUES(2, 'user02', 'pass02', '이순신', '남', '010-5678-9012', 'lee123@kh.or.kr', 10);
+
+INSERT INTO USER_FK2
+VALUES(3, 'user03', 'pass03', '유관순', '여', '010-9999-3131', 'yoo123@kh.or.kr', 30);
+
+INSERT INTO USER_FK2
+VALUES(4, 'user04', 'pass04', '안중근', '남', '010-2222-1111', 'ahn123@kh.or.kr', null);
+
+COMMIT;
+
+
+
+
+SELECT * FROM USER_GRADE2;
+SELECT * FROM USER_USED_FK2;
+
+-- USER_GRADE2 테이블에서 GRADE_COE =10 삭제
+DELETE FROM USER_GRADE2
+WHERE GRADE_CODE = 10;
+--> ON DELETE SET NULL 옵션이 설정되어 있어 삭제가 이루어짐.
+
+
+SELECT * FROM USER_GRADE2;
+SELECT * FROM USER_USED_FK2;
+
+
+ROLLBACK;
+
+
+
+---------------------
+
+
+-- 2-3) ON DELETE CASCADE
+
+
+
+-- 삭제 조건 확인을 위한 테이블, 샘플 데이터
+CREATE TABLE USER_GRADE3(
+  GRADE_CODE NUMBER PRIMARY KEY,
+  GRADE_NAME VARCHAR2(30) NOT NULL
+);
+INSERT INTO USER_GRADE3
+VALUES (10, '일반회원');
+INSERT INTO USER_GRADE3
+VALUES (20, '우수회원');
+INSERT INTO USER_GRADE3
+VALUES (30, '특별회원');
+
+
+
+-- ON DELETE CASCADE 삭제 옵션을 추가한 테이블 생성
+CREATE TABLE USER_FK3(
+  USER_NO NUMBER PRIMARY KEY,
+  USER_ID VARCHAR2(20) UNIQUE,
+  USER_PWD VARCHAR2(30) NOT NULL,
+  USER_NAME VARCHAR2(30),
+  GENDER CHAR(3),
+  PHONE VARCHAR2(30),
+  EMAIL VARCHAR2(50),
+  GRADE_CODE NUMBER
+);
+
+
+-- 샘플데이터 삽입
+INSERT INTO USER_FK3
+VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr', 10);
+
+INSERT INTO USER_FK3
+VALUES(2, 'user02', 'pass02', '이순신', '남', '010-5678-9012', 'lee123@kh.or.kr', 10);
+
+INSERT INTO USER_FK3
+VALUES(3, 'user03', 'pass03', '유관순', '여', '010-9999-3131', 'yoo123@kh.or.kr', 30);
+
+INSERT INTO USER_FK3
+VALUES(4, 'user04', 'pass04', '안중근', '남', '010-2222-1111', 'ahn123@kh.or.kr', null);
+
+COMMIT;
+
+
+SELECT * FROM USER_GRADE3;
+SELECT * FROM USER_USED_FK3;
+
+SELECT * FROM USER_CONSTRAINTS;
+SELECT * FROM SYS.USER_CONS_COLUMNS;
+
+DELETE FROM USER_GRADE3
+WHERE GRADE_CODE = 10;
+
+SELECT * FROM USER_GRADE3;
+SELECT * FROM USER_USED_FK3;
+-- ON DELETE CASECADE 옵션으로 인해 참조키를 사용한 행이 삭제됨을 확인
+
+ROLLBACK;
+
+
+
+------------------------------------------------------------------------------------------
+
+
+/* 5. CHECK 제약 조건 
+
+
+*/
+
+-- CHECK 제약조건이 설정된 테이블 생성 
+CREATE TABLE USER_CHECK(
+  USER_NO NUMBER PRIMARY KEY,
+  USER_ID VARCHAR2(20) UNIQUE,
+  USER_PWD VARCHAR2(30) NOT NULL,
+  USER_NAME VARCHAR2(30),
+  GENDER CHAR(3) ,
+  PHONE VARCHAR2(30),
+  EMAIL VARCHAR2(50)
+);
+
+
+-- 순서 대로 삽입 하면서 확인
+INSERT INTO USER_USED_CHECK
+VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+
+INSERT INTO USER_USED_CHECK
+VALUES(2, 'user02', 'pass02', '홍길동', '남자', '010-1234-5678', 'hong123@kh.or.kr');
+
+
+
+
+---------------------
+
+
+-- (참고) CHECK 제약 조건은 범위로도 설정 가능.
+CREATE TABLE USER_CHECK2(
+  TEST_NUMBER NUMBER,
+  CONSTRAINT CK_TEST_NUMBER CHECK (TEST_NUMBER > 0)
+);
+
+INSERT INTO USER_CHECK2
+VALUES (10);
+INSERT INTO USER_CHECK2
+VALUES (-10);
+ 
+
+-- (참고) 복잡한 범위 설정 + 테이블 레벨로 CHECK 제약조건 추가
+CREATE TABLE USER_CHECK3 (
+    C_NAME VARCHAR2(15 CHAR),
+    C_PRICE NUMBER,
+    C_LEVEL CHAR(1),
+    C_DATE DATE,
+    CONSTRAINT TBCH3_NAME_PK PRIMARY KEY (C_NAME),
+    CONSTRAINT TBCH3_PRICE_PK CHECK (C_PRICE >= 1 AND C_PRICE <= 99999),
+    CONSTRAINT TBCH3_LEVEL_PK CHECK (C_LEVEL = 'A' OR C_LEVEL = 'B' OR C_LEVEL = 'C'),
+    CONSTRAINT TBCH3_DATE_PK CHECK (C_DATE >= TO_DATE('2016/01/01', 'YYYY/MM/DD'))
+);
+
+
+------------------------------------------------------------------------------------------
+
+-- [실습 문제]
+-- 회원가입용 테이블 생성(USER_TEST)
+-- 컬럼명 : USER_NO(회원번호) - 기본키(PK_USER_TEST), 
+--         USER_ID(회원아이디) - 중복금지(UK_USER_ID),
+--         USER_PWD(회원비밀번호) - NULL값 허용안함(NN_USER_PWD),
+--         PNO(주민등록번호) - 중복금지(UK_PNO), NULL 허용안함(NN_PNO),
+--         GENDER(성별) - '남' 혹은 '여'로 입력(CK_GENDER),
+--         PHONE(연락처),
+--         ADDRESS(주소),
+--         STATUS(탈퇴여부) - NOT NULL(NN_STATUS), 'Y' 혹은 'N'으로 입력(CK_STATUS)
+-- 각 컬럼의 제약조건에 이름 부여할 것
+-- 5명 이상 INSERT할 것
 
 
 
