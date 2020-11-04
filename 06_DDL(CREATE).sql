@@ -157,5 +157,59 @@ SELECT * FROM USER_CONSTRAINTS;
 SELECT * FROM USER_CONS_COLUMNS;
 -- USER_CONS_COLUMNS : 제약 조건이 설정된 컬럼을 확인하는 딕셔너리 뷰
 
+--------------------------------------------------------------------------------
+
+-- 1. NOT NULL 제약 조건
+-- 해당 컬럼에 반드시 값이 기록되어야 하는 경우 사용하는 제약 조건
+-- 데이터 삽입/수정 시 NULL 값을 허용하지 않도록
+-- 컬럼 레벨에서 지정함.
+
+-- NOT NULL 제약조건이 없는 경우
+CREATE TABLE USER_NOT_NN(
+    USER_NO NUMBER,
+    USER_ID VARCHAR2(20),
+    USER_PWD VARCHAR2(20),
+    USER_NAME VARCHAR2(30),
+    GENDER CHAR(3),
+    PHONE VARCHAR2(30),
+    EMAIL VARCHAR2(50)
+);
+
+INSERT INTO USER_NOT_NN 
+VALUES(1, 'USER01', 'PASS01', '김영주', '남', '010-1111-2222', 'USER01@naver.com');
+
+INSERT INTO USER_NOT_NN 
+VALUES(2, NULL, NULL, NULL, '남', '010-1111-2222', 'USER01@naver.com');
+
+SELECT * FROM USER_NOT_NN;
+
+-- NOT NULL 제약조건이 설정된 경우
+-- ★★★★★★★★★★(쥰내 중요) NOT NULL 제약조건은 테이블 생성 시 컬럼 레벨로만 지정 가능함
+CREATE TABLE USER_NN(
+    USER_NO NUMBER NOT NULL,
+    USER_ID VARCHAR2(20) NOT NULL,
+    USER_PWD VARCHAR2(20) NOT NULL,
+    USER_NAME VARCHAR2(30),
+    GENDER CHAR(3),
+    PHONE VARCHAR2(30),
+    EMAIL VARCHAR2(50) NOT NULL
+);
+
+-- 작성한 제약조건 확인
+SELECT C1.TABLE_NAME, COLUMN_NAME, SEARCH_CONDITION
+FROM USER_CONSTRAINTS C1
+JOIN USER_CONS_COLUMNS C2 USING(CONSTRAINT_NAME)
+WHERE C1.TABLE_NAME = 'USER_NN';
+
+INSERT INTO USER_NN 
+VALUES(1, 'USER01', 'PASS01', '김영주', '남', '010-1111-2222', 'USER01@naver.com');
+
+INSERT INTO USER_NN 
+VALUES(2, 'USER02', 'PASS02', NULL, '남', '010-1111-2222', 'USER01@naver.com');
+
+
+
+
+
 
 
