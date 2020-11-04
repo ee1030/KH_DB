@@ -548,7 +548,8 @@ FROM EMPLOYEE
 NATURAL JOIN JOB
 WHERE SALARY = (SELECT MAX(SALARY)
                 FROM EMPLOYEE
-                WHERE HIRE_DATE >= '00/01/01');
+                --WHERE HIRE_DATE >= '00/01/01'
+                WHERE EXTRACT(YEAR FROM HIRE_DATE) = '2000');
 
 -- 3번문제
 
@@ -575,19 +576,31 @@ SELECT EMP_ID, EMP_NAME, MANAGER_ID, EMP_NO, HIRE_DATE
 FROM EMPLOYEE
 WHERE (DEPT_CODE, MANAGER_ID) = (SELECT DEPT_CODE, MANAGER_ID
                                  FROM EMPLOYEE
-                                 WHERE SUBSTR(EMP_NO, 1, 2) = 77
+                                 WHERE --SUBSTR(EMP_NO, 1, 2) = 77
+                                         EMP_NO LIKE '77%'
                                  AND SUBSTR(EMP_NO, 8, 1) = 2);
 
 -- 6번문제
 
 SELECT EMP_ID, EMP_NAME, NVL(DEPT_TITLE, '소속없음'), JOB_NAME, HIRE_DATE
-FROM EMPLOYEE
+FROM EMPLOYEE E
 LEFT JOIN DEPARTMENT ON (DEPT_CODE = DEPT_ID)
 JOIN JOB USING(JOB_CODE)
+/*
 WHERE (NVL(DEPT_CODE, 0), HIRE_DATE) IN (SELECT NVL(DEPT_CODE, 0), MIN(HIRE_DATE)
-                                    FROM EMPLOYEE
-                                    WHERE ENT_YN != 'Y'
-                                    GROUP BY DEPT_CODE)
+                                         FROM EMPLOYEE
+                                         WHERE ENT_YN != 'Y'
+                                         GROUP BY DEPT_CODE)
+WHERE HIRE_DATE IN (SELECT MIN(HIRE_DATE)
+                      FROM EMPLOYEE
+                      WHERE ENT_YN != 'Y'
+                      GROUP BY DEPT_CODE)
+*/
+WHERE HIRE_DATE IN (SELECT MIN(HIRE_DATE)
+                      FROM EMPLOYEE M
+                      WHERE ENT_YN != 'Y'
+                      AND E.DEPT_CODE = M.DEPT_CODE
+                      OR(E.DEPT_CODE IS NULL AND M.DEPT_CODE IS NULL)) -- 상관쿼리 사용
 ORDER BY HIRE_DATE;
 
 -- 7번문제
