@@ -214,19 +214,26 @@ VALUES(2, 'USER02', 'PASS02', NULL, '남', '010-1111-2222', 'USER01@naver.com');
 --------------------------------------------------------------------------------
 
 /* 2. UNIQUE 제약 조건
-
+    - 컬럼 입력값에 대해서 중복을 제한하는 제약 조건.
+    - 컬럼/테이블 레벨에서 제약 조건 설정 가능
+    - 단, UNIQUE 제약 조건이 설정된 컬럼에는 NULL값 중복은 가능하다.
 */
 
 
 -- USER_NN 테이블에 중복 데이터 삽입(성공? 실패?)
+SELECT * FROM USER_NN;
 
+INSERT INTO USER_NN
+VALUES(1, 'USER01', 'PASS01', '김영주', '남', '010-1111-2222', 'USER01@naver.com');
 
 -- 1) 컬럼 레벨로  UNIQUE 제약 조건 설정
 
 -- UNIQUE 제약 조건 테이블 생성
 CREATE TABLE USER_UK(
     USER_NO NUMBER,
-    USER_ID VARCHAR2(20),
+    --USER_ID VARCHAR2(20) UNIQUE, -- 기본 컬럼레벨 제약조건 지정
+    USER_ID VARCHAR2(20) CONSTRAINT USER_ID_UK UNIQUE,
+                        --CONSTRAINT 제약조건명 제약조건
     USER_PWD VARCHAR2(20) NOT NULL,
     USER_NAME VARCHAR2(30),
     GENDER CHAR(3),
@@ -243,18 +250,19 @@ VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr
 
 INSERT INTO USER_UK
 VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
-
-
-INSERT INTO USER_UK
-VALUES(1, NULL, 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
-
+-- ORA-00001: unique constraint (KH.USER_ID_UK) violated
+--> USER_ID 컬럼에 중복데이터가 삽입되어 UNIQUE 제약 조건을 위배
 
 INSERT INTO USER_UK
 VALUES(1, NULL, 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+-- UNIQUE는 NULL 값 삽입 가능
 
+INSERT INTO USER_UK
+VALUES(1, NULL, 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+-- UNIQUE는 NULL 값 중복 삽입도 가능
 
 -- 삽입 결과 확인
-SELECT  * FROM USER_USED_UK; 
+SELECT  * FROM USER_UK; 
 
 
 -- 오류 보고에 나타나는 SYS_C008635 같은 제약 조건명으로
@@ -262,7 +270,7 @@ SELECT  * FROM USER_USED_UK;
 SELECT UCC.TABLE_NAME, UCC.COLUMN_NAME, UC.CONSTRAINT_TYPE
 FROM USER_CONSTRAINTS UC, USER_CONS_COLUMNS UCC
 WHERE UCC.CONSTRAINT_NAME = UC.CONSTRAINT_NAME
-AND UCC.CONSTRAINT_NAME = 'SYS_C0012215';
+AND UCC.CONSTRAINT_NAME = 'USER_ID_UK2';
 
 
 --------------------------------------------
@@ -271,7 +279,10 @@ AND UCC.CONSTRAINT_NAME = 'SYS_C0012215';
 
 
 /* [작성법]
-	
+	CREATE TABLE 테이블명(
+        컬럼명 데이터타입, ...,
+        [CONSTRAINT 제약조건명] 제약조건 (컬럼명)
+    );
 	
 */
 
@@ -283,7 +294,9 @@ CREATE TABLE USER_UK2(
     USER_NAME VARCHAR2(30),
     GENDER CHAR(3),
     PHONE VARCHAR2(30),
-    EMAIL VARCHAR2(50)
+    EMAIL VARCHAR2(50),
+    --UNIQUE(USER_ID) -- 기본 테이블 레벨 제약조건 설정
+    CONSTRAINT USER_ID_UK2 UNIQUE(USER_ID)
 );
 
 
@@ -300,6 +313,7 @@ VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr
 
 INSERT INTO USER_UK2
 VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
+-- ORA-00001: unique constraint (KH.USER_ID_UK2) violated
 
 SELECT * FROM USER_UK2;
 
@@ -308,7 +322,9 @@ SELECT * FROM USER_UK2;
 --------------------------------------------
 
 -- 3) UNIQUE 복합키
-
+-- 두 개 이상의 컬럼을 묶어 하나의 UNIQUE 제약 조건을 설정함.
+-- 설정된 컬럼의 데이터가 모두 일치해야 중복으로 판정됨.
+-- 복합키는 테이블 레벨로만 작성할 수 있음
 
 CREATE TABLE USER_UK3(
     USER_NO NUMBER,
@@ -317,7 +333,8 @@ CREATE TABLE USER_UK3(
     USER_NAME VARCHAR2(30),
     GENDER CHAR(3),
     PHONE VARCHAR2(30),
-    EMAIL VARCHAR2(50)
+    EMAIL VARCHAR2(50),
+    CONSTRAINT USER_NO_ID_UK UNIQUE(USER_NO, USER_ID)
 );
 
 
@@ -343,7 +360,7 @@ SELECT * FROM USER_UK3;
 SELECT UC.TABLE_NAME, UCC.COLUMN_NAME, UCC.CONSTRAINT_NAME, UC.CONSTRAINT_TYPE
 FROM USER_CONSTRAINTS UC
 JOIN USER_CONS_COLUMNS UCC ON(UC.CONSTRAINT_NAME = UCC.CONSTRAINT_NAME)
-WHERE UCC.CONSTRAINT_NAME = 'SYS_C0012220';
+WHERE UCC.CONSTRAINT_NAME = 'USER_NO_ID_UK';
 --> 두개의 UNIQUE 제약 조전이이 하나의 제약 조건명으로 되어있는 것 확인
 
 
@@ -375,46 +392,60 @@ WHERE C1.TABLE_NAME = 'CONS_NAME';
 
 
 /* 3. PRIMARY KEY(기본키) 제약 조건 
-
+    - 테이블에서 한 행의 정보를 찾기 위해 사용할 컬럼을 의미함.
+      -> 테이블의 각 행에 대한 식별자(IDENTIFIER) 역할을 함.
+      
+    - NOT NULL + UNIQUE 제약조건의 의미를 가지고 있음.
+    
+    - 한 테이블 당 하나의 PK 제약조건을 설정할 수 있음
+    
+    - 컬럼 / 테이블 레벨로 제약 조건 설정 가능.
+    
+    - PK도 복합키 설정 가능
 
 */
 
 -- 1) PRIMARY KEY가 설정된 테이블 생성
 
 CREATE TABLE USER_PK(
+  --USER_NO NUMBER PRIMARY KEY, -- 컬럼 레벨로 PK 설정
+  --USER_NO NUMBER CONSTRAINT USER_PK_PK PRIMARY KEY, -- 컬럼 레벨로 PK 설정 + 이름 지정
   USER_NO NUMBER,
   USER_ID VARCHAR2(20) UNIQUE,
   USER_PWD VARCHAR2(30) NOT NULL,
   USER_NAME VARCHAR2(30),
   GENDER CHAR(3),
   PHONE VARCHAR2(30),
-  EMAIL VARCHAR2(50)
+  EMAIL VARCHAR2(50),
+  --PRIMARY KEY(USER_NO) -- 테이블 레벨 PK 설정
+  CONSTRAINT USER_PK_PK PRIMARY KEY(USER_NO)
 );
 
 
 -- 순서 대로 삽입 하면서 확인
-INSERT INTO USER_USED_PK
+INSERT INTO USER_PK
 VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
 
-INSERT INTO USER_USED_PK
+INSERT INTO USER_PK
 VALUES(1, 'user02', 'pass02', '이순신', '남', '010-5678-9012', 'lee123@kh.or.kr');
+-- ORA-00001: unique constraint (KH.USER_PK_PK) violated
 
-INSERT INTO USER_USED_PK
+INSERT INTO USER_PK
 VALUES(NULL, 'user03', 'pass03', '유관순', '여', '010-9999-3131', 'yoo123@kh.or.kr');
-
+-- ORA-01400: cannot insert NULL into ("KH"."USER_PK"."USER_NO")
 
 
 -- PK_USER_NO 제약조건 확인
 SELECT UC.TABLE_NAME, UCC.COLUMN_NAME, UC.CONSTRAINT_NAME, UC.CONSTRAINT_TYPE
 FROM USER_CONSTRAINTS UC
 JOIN USER_CONS_COLUMNS UCC ON(UC.CONSTRAINT_NAME = UCC.CONSTRAINT_NAME)
-WHERE UC.CONSTRAINT_NAME = 'PK_USER_NO';
+WHERE UC.CONSTRAINT_NAME = 'USER_PK_PK';
 
 
 --------------------------------------------
 
 -- 2) PRIMARY KEY 복합키
-
+--> 테이블 레벨로만 작성할 수 있음
 CREATE TABLE USER_PK2(
   USER_NO NUMBER,
   USER_ID VARCHAR2(20),
@@ -422,7 +453,8 @@ CREATE TABLE USER_PK2(
   USER_NAME VARCHAR2(30),
   GENDER CHAR(3),
   PHONE VARCHAR2(30),
-  EMAIL VARCHAR2(50)
+  EMAIL VARCHAR2(50),
+  CONSTRAINT USER_NO_ID_PK PRIMARY KEY(USER_NO, USER_ID) -- 복합키 설정
 );
 
 -- 순서 대로 삽입 하면서 확인
@@ -437,6 +469,7 @@ VALUES(2, 'user01', 'pass01', '유관순', '여', '010-9999-3131', 'yoo123@kh.or.kr'
 
 INSERT INTO USER_PK2
 VALUES(1, 'user01', 'pass01', '신사임당', '여', '010-9999-9999', 'sin123@kh.or.kr');
+-- ORA-00001: unique constraint (KH.USER_NO_ID_PK) violated
 
 SELECT * FROM USER_PK2;
 
@@ -447,6 +480,20 @@ SELECT * FROM USER_PK2;
 
 /* 4. FOREIGN KEY(외부키 / 외래키) 제약조건 
 
+    - 참조(REFERENCES)된 다른 테이블의 컬럼이 제공하는 값만 사용 할 수 있게 하는 제약조건
+    
+    - FOREIGN KEY 제약 조건에 의해서 테이블간의 관계(RELATIONSHIP)가 형성
+    
+    - 제공되는 값 외에는 NULL을 사용할 수 있음.
+    
+    -- 컬럼 레벨로 제약 조건 설정
+    컬럼명 데이터타입 [CONSTRAINT 제약조건명] REFERENCES 참조테이블명[(참조컬럼명)][삭제옵션]
+    
+    -- 테이블 레벨로 제약 조건 설정
+    [CONSTRAINT 제약조건명] FOREIGN KEY(적용컬럼명) REFERENCES 참조테이블명[(참조컬럼명)][삭제옵션]
+    
+    (★★★★★)
+    참조할 수 있는 컬럼은 PK 또는 UNIQUE 제약 조건이 설정된 컬럼만 지정할 수 있다.
 
 */
 -- 1) FOREIGN KEY 제약 조건 설정
