@@ -493,7 +493,8 @@ SELECT * FROM USER_PK2;
     [CONSTRAINT 제약조건명] FOREIGN KEY(적용컬럼명) REFERENCES 참조테이블명[(참조컬럼명)][삭제옵션]
     
     (★★★★★)
-    참조할 수 있는 컬럼은 PK 또는 UNIQUE 제약 조건이 설정된 컬럼만 지정할 수 있다.
+    - 참조할 수 있는 컬럼은 PK 또는 UNIQUE 제약 조건이 설정된 컬럼만 지정할 수 있다.
+    - 참조 컬럼명을 작성하지 않으면 참조테이블의 PK 컬럼을 참조하게 됨.
 
 */
 -- 1) FOREIGN KEY 제약 조건 설정
@@ -519,7 +520,9 @@ CREATE TABLE USER_FK(
   GENDER CHAR(3),
   PHONE VARCHAR2(30),
   EMAIL VARCHAR2(50),
-  GRADE_CODE NUMBER
+  GRADE_CODE NUMBER,
+  CONSTRAINT GRADE_CODE_FK FOREIGN KEY(GRADE_CODE) 
+  REFERENCES USER_GRADE(GRADE_CODE)
 );
 
 
@@ -528,28 +531,32 @@ CREATE TABLE USER_FK(
 INSERT INTO USER_FK
 VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr', 10);
 
-INSERT INTO USER_USED_FK
+INSERT INTO USER_FK
 VALUES(2, 'user02', 'pass02', '이순신', '남', '010-5678-9012', 'lee123@kh.or.kr', 10);
 
-INSERT INTO USER_USED_FK
+INSERT INTO USER_FK
 VALUES(3, 'user03', 'pass03', '유관순', '여', '010-9999-3131', 'yoo123@kh.or.kr', 30);
 
-INSERT INTO USER_USED_FK
+INSERT INTO USER_FK
 VALUES(4, 'user04', 'pass04', '안중근', '남', '010-2222-1111', 'ahn123@kh.or.kr', null);
 
-SELECT * FROM USER_USED_FK;
+SELECT * FROM USER_FK;
 
-INSERT INTO USER_USED_FK
+INSERT INTO USER_FK
 VALUES(5, 'user05', 'pass05', '윤봉길', '남', '010-6666-1234', 'yoon123@kh.or.kr', 50);
-
+-- ORA-02291: integrity constraint (KH.GRADE_CODE_FK) violated - parent key not found
 
 
 -- 설정된 제약조건 확인
 SELECT UC.TABLE_NAME, UCC.COLUMN_NAME, UC.CONSTRAINT_NAME, UC.CONSTRAINT_TYPE
 FROM USER_CONSTRAINTS UC
 JOIN USER_CONS_COLUMNS UCC ON (UC.CONSTRAINT_NAME = UCC.CONSTRAINT_NAME)
-WHERE UC.CONSTRAINT_NAME = 'FK_GRADE_CODE';
+WHERE UC.CONSTRAINT_NAME = 'GRADE_CODE_FK';
 
+SELECT * FROM USER_FK
+LEFT JOIN USER_GRADE USING(GRADE_CODE);
+-- FK로 연결됨 == 두 테이블이 연결되어 관계가 형성됨 
+-- == JOIN 가능(JOIN 시 FK에 사용된 컬럼을 작성하면 됨)
 
 
 --------------------------------------------
@@ -564,9 +571,10 @@ WHERE UC.CONSTRAINT_NAME = 'FK_GRADE_CODE';
 -- 제공하는 컬럼의 값은 삭제하지 못함
 
 SELECT * FROM USER_GRADE;
+SELECT * FROM USER_FK;
 
 DELETE FROM USER_GRADE WHERE GRADE_CODE = 10; -- 삭제 구문
-
+-- ORA-02292: integrity constraint (KH.GRADE_CODE_FK) violated - child record found
 
 COMMIT;
 
@@ -584,7 +592,8 @@ ROLLBACK;
 
 
 -- 2-2)ON DELETE SET NULL 
-
+-- 부모 컬럼의 데이터가 삭제된 경우
+-- 참조하던 자식의 컬럼 값을 NULL로 변경하는 옵션
 
 
 -- 삭제 조건 확인을 위한 테이블, 샘플 데이터
@@ -612,7 +621,9 @@ CREATE TABLE USER_FK2(
   GENDER CHAR(3),
   PHONE VARCHAR2(30),
   EMAIL VARCHAR2(50),
-  GRADE_CODE NUMBER
+  GRADE_CODE NUMBER,
+  CONSTRAINT GRADE_CODE_FK2 FOREIGN KEY(GRADE_CODE)
+        REFERENCES USER_GRADE2(GRADE_CODE) ON DELETE SET NULL
  );
 
 -- 샘플데이터 삽입
@@ -634,7 +645,7 @@ COMMIT;
 
 
 SELECT * FROM USER_GRADE2;
-SELECT * FROM USER_USED_FK2;
+SELECT * FROM USER_FK2;
 
 -- USER_GRADE2 테이블에서 GRADE_COE =10 삭제
 DELETE FROM USER_GRADE2
@@ -643,7 +654,7 @@ WHERE GRADE_CODE = 10;
 
 
 SELECT * FROM USER_GRADE2;
-SELECT * FROM USER_USED_FK2;
+SELECT * FROM USER_FK2;
 
 
 ROLLBACK;
@@ -653,8 +664,9 @@ ROLLBACK;
 ---------------------
 
 
--- 2-3) ON DELETE CASCADE
-
+-- 2-3) ON DELETE CASCADE(종속)
+-- 부모 컬럼 값을 삭제하는 경우
+-- 해당 컬럼 값을 참조하던 자식 테이블의 행을 같이 삭제하는 옵션
 
 
 -- 삭제 조건 확인을 위한 테이블, 샘플 데이터
@@ -680,7 +692,9 @@ CREATE TABLE USER_FK3(
   GENDER CHAR(3),
   PHONE VARCHAR2(30),
   EMAIL VARCHAR2(50),
-  GRADE_CODE NUMBER
+  GRADE_CODE NUMBER,
+  CONSTRAINT GRADE_CODE_FK3 FOREIGN KEY(GRADE_CODE)
+        REFERENCES USER_GRADE3(GRADE_CODE) ON DELETE CASCADE
 );
 
 
@@ -701,16 +715,14 @@ COMMIT;
 
 
 SELECT * FROM USER_GRADE3;
-SELECT * FROM USER_USED_FK3;
+SELECT * FROM USER_FK3;
 
-SELECT * FROM USER_CONSTRAINTS;
-SELECT * FROM SYS.USER_CONS_COLUMNS;
 
 DELETE FROM USER_GRADE3
 WHERE GRADE_CODE = 10;
 
 SELECT * FROM USER_GRADE3;
-SELECT * FROM USER_USED_FK3;
+SELECT * FROM USER_FK3;
 -- ON DELETE CASECADE 옵션으로 인해 참조키를 사용한 행이 삭제됨을 확인
 
 ROLLBACK;
@@ -720,8 +732,13 @@ ROLLBACK;
 ------------------------------------------------------------------------------------------
 
 
-/* 5. CHECK 제약 조건 
+/* 5. CHECK 제약 조건
+-- 컬럼에 기록되는 값에 조건을 설정하는 제약 조건.
 
+    [작성법]
+    CHECK (컬럼명 비교연산자 비교값)
+
+    -> 주의사항 : 비교값은 오로지 리터럴만 사용할 수 있음.
 
 */
 
@@ -731,21 +748,27 @@ CREATE TABLE USER_CHECK(
   USER_ID VARCHAR2(20) UNIQUE,
   USER_PWD VARCHAR2(30) NOT NULL,
   USER_NAME VARCHAR2(30),
-  GENDER CHAR(3) ,
+  GENDER CHAR(3) CHECK(GENDER IN ('남', '여')),
   PHONE VARCHAR2(30),
   EMAIL VARCHAR2(50)
 );
 
 
 -- 순서 대로 삽입 하면서 확인
-INSERT INTO USER_USED_CHECK
+INSERT INTO USER_CHECK
 VALUES(1, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
 
-INSERT INTO USER_USED_CHECK
-VALUES(2, 'user02', 'pass02', '홍길동', '남자', '010-1234-5678', 'hong123@kh.or.kr');
+INSERT INTO USER_CHECK
+VALUES(2, 'user02', 'pass02', '홍길순', '여', '010-1234-5678', 'hong123@kh.or.kr');
+-- ORA-12899: value too large for column "KH"."USER_CHECK"."GENDER" (actual: 6, maximum: 3)
+--> 데이터 크기 초과
+-- ORA-02290: check constraint (KH.SYS_C007049) violated
+--> 체크 제약 조건 위배
 
 
-
+INSERT INTO USER_CHECK
+VALUES(3, 'user03', 'pass03', '홍길순', NULL, '010-1234-5678', 'hong123@kh.or.kr');
+-- NULL은 가능함
 
 ---------------------
 
@@ -790,7 +813,36 @@ CREATE TABLE USER_CHECK3 (
 -- 각 컬럼의 제약조건에 이름 부여할 것
 -- 5명 이상 INSERT할 것
 
+CREATE TABLE USER_TEST (
+    USER_NO NUMBER,
+    USER_ID VARCHAR2(20),
+    USER_PWD VARCHAR2(30) CONSTRAINT NN_USER_PWD NOT NULL,
+    PNO CHAR(14) CONSTRAINT NN_PNO NOT NULL, 
+    GENDER CHAR(3),
+    PHONE VARCHAR2(15),
+    ADDRESS VARCHAR2(50),
+    STATUS CHAR(1) CONSTRAINT NN_STATUS NOT NULL,
+    CONSTRAINT PK_USER_TEST PRIMARY KEY (USER_NO),
+    CONSTRAINT UK_USER_ID UNIQUE(USER_ID),
+    CONSTRAINT UK_PNO UNIQUE(PNO),
+    CONSTRAINT CK_GENDER CHECK(GENDER IN ('남', '여')),
+    CONSTRAINT CK_STATUS CHECK(STATUS IN ('Y', 'N'))
+);
 
+SELECT * FROM USER_TEST;
 
+INSERT INTO USER_TEST
+VALUES(1, 'USER01', 'USER111', '123456-1234567', '남', '010-1111-2222', '경기도 흥청망청시 탕진동 123-2', 'Y');
 
+INSERT INTO USER_TEST
+VALUES(2, 'USER02', 'USER222', '851223-2234567', '여', '010-2222-2222', '경기도 흥청망청시 탕진동 123-2', 'N');
+
+INSERT INTO USER_TEST
+VALUES(3, 'USER03', 'USER333', '940228-2234567', '여', '010-3333-2222', '경기도 흥청망청시 탕진동 123-3', 'Y');
+
+INSERT INTO USER_TEST
+VALUES(4, 'USER04', 'USER444', '901105-1253467', '남', '010-4444-2222', '경기도 흥청망청시 탕진동 123-4', 'N');
+
+INSERT INTO USER_TEST
+VALUES(5, 'USER05', 'USER555', '890507-1785567', '남', '010-5555-2222', '경기도 흥청망청시 탕진동 123-5', 'Y');
 
