@@ -843,3 +843,39 @@ INSERT INTO USER_TEST
 VALUES (5, 'user05', 'pass05', '920522-2234567', '여', '010-5555-9999', '서울시 강남구 대치동', 'N');
 
 ROLLBACK;
+
+--------------------------------------------------------------------------------
+
+-- 서브쿼리를 이용한 테이블 생성
+   --> 컬럼명, 데이터타입, 컬럼 값이 복사되고,
+   --  제약조건은 NOT NULL만 복사됨.
+   
+CREATE TABLE EMPLOYEE_COPY 
+AS SELECT * FROM EMPLOYEE;
+
+SELECT * FROM EMPLOYEE_COPY2;
+
+-- 사번, 이름, 급여, 부서명, 직급명으로 이루어진
+-- EMPLOYEE_COPY2 테이블을 생성하고 데이터 복사
+CREATE TABLE EMPLOYEE_COPY2
+AS SELECT EMP_ID, EMP_NAME, DEPT_TITLE, JOB_NAME
+   FROM EMPLOYEE
+   LEFT JOIN DEPARTMENT ON (DEPT_CODE = DEPT_ID)
+   LEFT JOIN JOB USING(JOB_CODE);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
