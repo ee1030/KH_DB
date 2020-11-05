@@ -79,6 +79,7 @@ DROP COLUMN DEPT_TITLE;
    --> 컬럼 삭제 시 FK 제약조건이 설정된 컬럼은 삭제되지 않음.
    
 --------------------------------------------------------------------------------
+
 /*
     2. 제약조건 추가, 삭제
     
@@ -128,7 +129,71 @@ ALTER TABLE LOCATION
 ADD CONSTRAINT LO_NCODE_FK FOREIGN KEY(NATIONAL_CODE)
 REFERENCES NATIONAL/*(NATIONAL_CODE)*/;
 
+-- 2) 제약조건 삭제(DROP)
+ALTER TABLE DEPT_COPY
+DROP CONSTRAINT DC_TITLE_UK;
 
+-- NOT NULL 제약 조건 삭제시 MODIFY 사용
+ALTER TABLE DEPT_COPY
+MODIFY LNAME NULL;
 
+--------------------------------------------------------------------------------
 
+-- 3. 컬럼, 제약조건, 테이블 이름 변경(RENAME)
+
+-- 1) 컬럼명 변경
+-- DEPT_COPY 테이블의 DEPT_TITLE -> DEPT_NAME
+ALTER TABLE DEPT_COPY
+RENAME COLUMN DEPT_TITLE TO DEPT_NAME;
+
+SELECT * FROM DEPT_COPY;
+
+-- 2) 제약 조건명 변경
+ALTER TABLE DEPT_COPY
+RENAME CONSTRAINT DC_ID_PK TO DCOPY_DID_PK;
+
+ALTER TABLE DEPT_COPY
+RENAME CONSTRAINT SYS_C007079 TO DCOPY_DID_NN;
+
+-- 3) 테이블명 변경
+ALTER TABLE DEPT_COPY
+RENAME TO DCOPY;
+
+SELECT * FROM DEPT_COPY; -- 존재하지 않음
+SELECT * FROM DCOPY;
+
+--------------------------------------------------------------------------------
+
+-- 4. 테이블 삭제(DROP TABLE)
+-- DCOPY 복사
+CREATE TABLE DCOPY2
+AS SELECT * FROM DCOPY;
+
+SELECT * FROM DCOPY2;
+
+-- DCOPY2에 PK 추가
+ALTER TABLE DCOPY2
+ADD CONSTRAINT DCOPY2_DID_PK PRIMARY KEY(DEPT_ID);
+
+-- EMPLOYEE 복사
+CREATE TABLE EMP_COPY
+AS SELECT * FROM EMPLOYEE;
+
+SELECT * FROM EMP_COPY;
+
+ALTER TABLE EMP_COPY
+ADD CONSTRAINT ECOPY_DCODE_FK FOREIGN KEY(DEPT_CODE)
+REFERENCES DCOPY2;
+
+-- FK 제약조건이 없는(관계가 형성되지 않은) 테이블 삭제
+DROP TABLE DCOPY;
+
+SELECT * FROM DCOPY;
+
+-- 관계가 형성되어 있는 테이블 삭제
+DROP TABLE DCOPY2;
+-- ORA-02449: unique/primary keys in table referenced by foreign keys
+
+DROP TABLE DCOPY2 CASCADE CONSTRAINT;
+-- CASCADE CONSTRAINT : EMP_COPY에 있는 FK제약조건 삭제
 
