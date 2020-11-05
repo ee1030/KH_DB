@@ -162,3 +162,210 @@ SELECT * FROM EMP_NEW;
 
 COMMIT;
 
+--------------------------------------------------------------------------------
+
+/*
+    3. UPDATE
+    - 테이블에 기록된 데이터의 컬럼 값을 수정하는 구문
+    - 테이블의 전체 행 개수에서는 변화가 없다.
+    
+    [작성법]
+    UPDATE 테이블명
+    SET 컬럼명 = 변경 값
+    [WHERE 컬럼명 비교연산자 비교값]
+*/
+
+CREATE TABLE DEPT_COPY
+AS SELECT * FROM DEPARTMENT;
+
+SELECT * FROM DEPT_COPY;
+
+-- DEPT_COPY 테이블에서 부서코드 'D9'인 행의 부서명을
+-- '전략기획팀'으로 수정
+UPDATE DEPT_COPY
+SET DEPT_TITLE = '전략기획팀'
+WHERE DEPT_ID = 'D9';
+
+SELECT * FROM DEPT_COPY;
+
+COMMIT;
+
+-- 여러 컬럼을 수정하는 경우
+
+-- DEPT_COPY 테이블에서 부서코드가 'D8'인 부서를
+-- 부서명 : 기술연구부 / 지역코드 : L2로 수정
+UPDATE DEPT_COPY
+SET DEPT_TITLE = '기술연구부', LOCATION_ID = 'L2'
+WHERE DEPT_ID = 'D8';
+
+SELECT * FROM DEPT_COPY;
+
+ROLLBACK;
+
+-- UPDATE + 서브쿼리
+
+/*
+    [작성법]
+    UPDATE 테이블명
+    SET 컬럼명 = (서브쿼리)
+    [WHERE 컬럼명 비교식 (서브쿼리)]
+*/
+
+-- 평상 시 유재식 사원을 부러워하던 방명수 사원의
+-- 급여와 보너스를 유재식과 동일하게 변경해주기로 했다.
+-- 이를 반영하기 위한 SQL 구문을 작성하시오
+
+CREATE TABLE EMP_SALARY
+AS SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY, BONUS
+    FROM EMPLOYEE;
+
+SELECT * FROM EMP_SALARY;
+
+-- 유재식, 방명수의 급여, 보너스 조회
+SELECT EMP_NAME, SALARY, BONUS
+FROM EMP_SALARY
+WHERE EMP_NAME IN ('유재식', '방명수', '노옹철', '전형돈', '정중하', '하동운');
+
+-- 방명수의 급여, 보너스를 유재식과 똑같이 수정
+UPDATE EMP_SALARY
+SET SALARY = (SELECT SALARY
+              FROM EMP_SALARY
+              WHERE EMP_NAME = '유재식'),
+    BONUS = (SELECT BONUS
+              FROM EMP_SALARY
+              WHERE EMP_NAME = '유재식')
+WHERE EMP_NAME = '방명수';
+
+-- 다중열 서브쿼리를 이용한 UPDATE문
+
+-- 방명수의 급여 인상 소식을 전해들은
+-- 노옹철, 전형돈, 정중하, 하동운이 단체 파업을 진행했다.
+-- 이를 해결하기 위해 위 4명의 급여, 보너스를 유재식과 똑같이 바꿔주기로 했다.
+-- 이를 반영한 SQL 구문을 작성하시오.
+SELECT EMP_NAME, SALARY, BONUS
+FROM EMP_SALARY
+WHERE EMP_NAME IN ('유재식', '방명수', '노옹철', '전형돈', '정중하', '하동운');
+
+UPDATE EMP_SALARY
+SET (SALARY, BONUS) = (SELECT SALARY, BONUS
+                        FROM EMP_SALARY
+                        WHERE EMP_NAME = '유재식')
+WHERE EMP_NAME IN ('노옹철', '전형돈', '정중하', '하동운');
+                        
+COMMIT;
+
+-- EMP_SALARY 테이블에서 BONUS를 받지 못하는 사원의 BONUS를 0.1로 수정해라
+UPDATE EMP_SALARY
+SET BONUS = 0.1
+WHERE BONUS IS NULL;
+
+SELECT * FROM EMP_SALARY;
+
+ROLLBACK;
+
+-- EMP_SALARY 테이블에서
+-- BONUS를 받지 못하는 사원의 BONUS를 0.1
+-- BONUS를 받던 사원들은 0.1씩 증가
+UPDATE EMP_SALARY E
+SET BONUS = (SELECT NVL2(BONUS, BONUS+0.1, 0.1)
+             FROM EMP_SALARY M
+             WHERE E.EMP_ID = M.EMP_ID);
+ 
+UPDATE EMP_SALARY
+SET BONUS = NVL(BONUS, 0) + 0.1;
+
+ROLLBACK;
+
+-- EMP_SALARY 테이블에서
+-- ASIA 지역에 근무하는 직원의 보너스를 0.5로 변경
+UPDATE EMP_SALARY
+SET BONUS = 0.5
+WHERE DEPT_CODE IN (SELECT DEPT_ID
+                     FROM DEPARTMENT
+                     JOIN LOCATION ON(LOCATION_ID = LOCAL_CODE)
+                     WHERE LOCAL_NAME LIKE 'ASIA%');
+                     
+SELECT * FROM EMP_SALARY;
+ROLLBACK;
+
+--------------------------------------------------------------------------------
+
+-- UPDATE시 주의사항
+    --> UPDATE시 변경할 값은 해당 컬럼의 제약 조건을 위배하면 안된다.
+    
+SELECT * FROM USER_FK;
+SELECT * FROM USER_GRADE;
+
+UPDATE USER_FK
+SET GRADE_CODE = 40 -- USER_GRADE 테이블에 GRADE_CODE 컬럼 값 중 없는 값을 작성함.
+WHERE USER_NO = 1;
+-- ORA-02291: integrity constraint (KH.GRADE_CODE_FK) violated - parent key not found
+
+--------------------------------------------------------------------------------
+
+/*
+    4. DELETE
+    - 테이블의 행을 삭제하는 구문
+    - 테이블 전체 행 개수가 줄어듦.
+    
+    [작성법]
+    DELETE FROM 테이블명
+    [WHERE 컬럼명 비교연산자 비교값]
+    
+    -> WHERE절을 작성하지 않는 경우
+       해당 테이블의 모든 데이터가 DELETE된다.
+*/
+
+COMMIT;
+
+DELETE FROM EMPLOYEE
+WHERE EMP_NAME = '장채현';
+-- 1 행 이(가) 삭제되었습니다.
+
+SELECT *
+FROM EMPLOYEE
+WHERE EMP_NAME = '장채현'; -- 조회 안됨
+
+ROLLBACK;
+
+-- WHERE절 미작성 시 모든 행이 삭제됨.
+SELECT * FROM EMP_SALARY;
+
+DELETE FROM EMP_SALARY; -- 24개 행 이(가) 삭제되었습니다.
+
+ROLLBACK;
+
+-- FK 제약조건 중 별도의 삭제옵션이 설정되지 않은 행은 삭제 불가능
+DELETE FROM USER_GRADE
+WHERE GRADE_CODE = '10';
+-- ORA-02292: integrity constraint (KH.GRADE_CODE_FK) violated - child record found
+
+-- 삭제 시 FK 제약 조건을 비활성화 하면 삭제가 가능하다.
+ALTER TABLE USER_FK
+DISABLE CONSTRAINT GRADE_CODE_FK CASCADE;
+
+SELECT * FROM USER_FK;
+SELECT * FROM USER_GRADE;
+
+INSERT INTO USER_GRADE
+VALUES(10, '일반회원');
+
+-- 제약조건 활성화
+ALTER TABLE USER_FK
+ENABLE CONSTRAINT GRADE_CODE_FK;
+
+-- TRUNCATE : 테이블의 전체행을 삭제하는 DDL
+-- DELETE보다 수행속도가 빠르고, ROLLBACK으로 복구가 불가능
+
+CREATE TABLE EMP_SALARY2
+AS SELECT * FROM EMP_SALARY;
+
+SELECT * FROM EMP_SALARY2;
+
+COMMIT;
+DELETE FROM EMP_SALARY2;
+ROLLBACK;
+
+TRUNCATE TABLE EMP_SALARY2;
+SELECT * FROM EMP_SALARY2;
+ROLLBACK;
