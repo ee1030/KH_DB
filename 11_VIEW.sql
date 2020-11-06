@@ -40,17 +40,238 @@ GRANT CREATE VIEW TO kh;
 
 SELECT * FROM V_EMPLOYEE;
 
--- * VIEW는 가상의 테이블 
+-- * VIEW는 가상의 테이블이다.
+--> 실제 존재하는 테이블이 아니라
+--  기반이 되는 테이블들의 데이터를 이용해서 결과를 보여주는 것.
+
+COMMIT;
+
+-- 사번이 205번인 직원의 이름을 '정중앙'으로 변경
+SELECT *
+FROM EMPLOYEE
+WHERE EMP_ID = '205';
+
+UPDATE EMPLOYEE
+SET EMP_NAME = '정중앙'
+WHERE EMP_ID = 205;
+
+-- 베이스테이블 확인
+SELECT EMP_NAME
+FROM EMPLOYEE
+WHERE EMP_ID = 205; -- 정중앙
+
+-- V_EMPLOYEE에서도 확인
+SELECT EMP_NAME
+FROM V_EMPLOYEE
+WHERE EMP_ID = 205; -- 정중앙
+
+ROLLBACK;
+
+--------------------------------------------------------------------------------
+COMMIT;
+
+UPDATE V_EMPLOYEE
+SET EMP_NAME = '정중앙'
+WHERE EMP_ID = 205;
+
+SELECT * FROM EMPLOYEE
+WHERE EMP_ID = 205;
+
+ROLLBACK;
+
+/* 2. DML로 조작이 불가능한 경우
+
+    1) VIEW에 포함되지 않은 컬럼을 조작하는 경우
+    
+    2) VIEW에 포함되지 않은 컬럼 중에
+       베이스 테이블 컬럼이 NOT NULL 제약조건이 있는 경우
+       
+    3) 뷰의 컬럼이 산술 표현식으로 정의된 경우
+    
+    4) VIEW 생성 시 서브쿼리에 GROUP BY절이 포함되어 있는 경우
+    
+    5) VIEW의 컬럼에 DISTINCT가 포함된 경우
+    
+    6) VIEW 생성에 사용된 서브쿼리에 JOIN이 작성되어 있는 경우
+*/
+
+-- 2) VIEW에 포함되지 않은 컬럼 중에
+--    베이스 테이블 컬럼이 NOT NULL 제약조건이 있는 경우
+CREATE VIEW V_JOB3
+AS SELECT JOB_NAME FROM JOB;
+
+INSERT INTO V_JOB3 VALUES('인턴');
+-- ORA-01400: cannot insert NULL into ("KH"."JOB"."JOB_CODE")
+
+-- VIEW를 이용해 DML을 수행하면
+-- VIEW 자체의 데이터가 변하는 것이 아니라
+-- 베이스 테이블의 값이 변하게 되고
+-- 그 결과를 다시 VIEW가 투영하는 것
+
+--------------------------------------------------------------------------------
+--  1) VIEW에 포함되지 않은 컬럼을 조작하는 경우
+CREATE OR REPLACE VIEW V_JOB3
+AS SELECT JOB_CODE
+    FROM JOB;
+
+SELECT * FROM V_JOB3;
+
+-- 1) VIEW에 포함되지 않은 컬럼을 조작하는 경우
+INSERT INTO V_JOB3 VALUES('J8', '인턴');
+-- ORA-00913: too many values 어림도 없지 ㄹㅇㅋㅋ
+
+UPDATE V_JOB3
+SET JOB_NAME = '인턴'
+WHERE JOB_CODE = 'J7';
+
+DELETE FROM V_JOB3
+WHERE JOB_NAME = '사원';
 
 
+--INSERT INTO V_JOB2 VALUES('J8');
+
+SELECT * FROM JOB;
 
 
+--------------------------------------------------------------------------------
+
+--   2) VIEW에 포함되지 않은 컬럼 중에
+--       베이스 테이블 컬럼이 NOT NULL 제약조건이 있는 경우
+-- INSERT시에 오류
+CREATE OR REPLACE VIEW V_JOB3
+AS SELECT JOB_NAME
+    FROM JOB;
+    
+SELECT * FROM V_JOB3;
+
+INSERT INTO V_JOB3 VALUES('인턴');
+-- 베이스 테이블인 JOB에 JOB_CODE는 NOT NULL 제약조건이 지정되어있음. --> 에러
+
+INSERT INTO V_JOB3 VALUES ('J8', '인턴');
+--  뷰에 정의되지 않은 컬럼 조작 --> 에러
+
+-- UPDATE/DELETE는 문제없이 가능
+INSERT INTO JOB VALUES('J8','인턴');
+
+SELECT * FROM V_JOB3;
+
+UPDATE V_JOB3 SET JOB_NAME = '알바'
+WHERE JOB_NAME = '인턴';
+
+SELECT * FROM V_JOB3;
+SELECT * FROM JOB;
+
+DELETE FROM V_JOB3
+WHERE JOB_NAME = '알바';
+
+SELECT * FROM V_JOB3;
+SELECT * FROM JOB;
 
 
+--------------------------------------------------------------------------------
+
+--  3) VIEW의 컬럼이 산술 표현식으로 정의된 경우
+CREATE OR REPLACE VIEW EMP_SAL
+AS SELECT EMP_ID, EMP_NAME, SALARY,
+	    (SALARY + (SALARY*NVL(BONUS, 0)))*12 연봉
+     FROM EMPLOYEE;
+
+SELECT * FROM EMP_SAL;
+
+-- 뷰에 산술 계산식이 포함된 경우 INSERT/UPDATE 시 에러 발생
+INSERT INTO EMP_SAL VALUES(800, '정진훈', 3000000, 36000000);
+-- ORA-01733: virtual column not allowed here 가상컬럼 절대 못쓰지 어림도없지 ㅋㅋ
+
+UPDATE EMP_SAL
+SET 연봉 = 8000000
+WHERE EMP_ID = 200;
 
 
+-- DELETE할 때는 사용 가능
+COMMIT;
+
+DELETE FROM EMP_SAL
+WHERE 연봉 = 124800000;
+
+SELECT * FROM EMP_SAL;
+SELECT * FROM EMPLOYEE;
+
+ROLLBACK;
 
 
+--------------------------------------------------------------------------------
+
+-- 4) VIEW 생성 시 서브쿼리에 GROUP BY절이 포함되어 있는 경우
+CREATE OR REPLACE VIEW V_GROUPDEPT
+AS SELECT DEPT_CODE, SUM(SALARY) 합계, AVG(SALARY) 평균
+     FROM EMPLOYEE
+     GROUP BY DEPT_CODE;
+     
+SELECT * FROM V_GROUPDEPT;
+
+-- 그룹함수 또는 GROUP BY를 사용한 경우 INSERT/UPDATE/DELETE 시 에러 발생
+INSERT INTO V_GROUPDEPT
+VALUES ('D10', 6000000, 4000000);  -- 에러남
+
+UPDATE V_GROUPDEPT
+SET DEPT_CODE = 'D10'
+WHERE DEPT_CODE = 'D1';
+
+DELETE FROM V_GROUPDEPT
+WHERE DEPT_CODE = 'D1';
+
+
+--------------------------------------------------------------------------------
+
+--   5) VIEW의 컬럼에 DISTINCT가 포함된 경우
+
+CREATE OR REPLACE VIEW V_DT_EMP
+AS SELECT DISTINCT JOB_CODE
+     FROM EMPLOYEE;
+     
+SELECT * FROM V_DT_EMP;     
+    
+-- DISTINCT를 사용한 경우 INSERT/UPDATE/DELETE 시 에러 발생    
+INSERT INTO V_DT_EMP VALUES('J9');
+
+UPDATE V_DT_EMP
+SET JOB_CODE = 'J9'
+WHERE JOB_CODE = 'J7';
+
+DELETE FROM V_DT_EMP WHERE JOB_CODE = 'J1';
+
+
+--------------------------------------------------------------------------------
+
+-- 6) VIEW 생성에 사용된 서브쿼리에 JOIN이 작성되어 있는 경우
+CREATE OR REPLACE VIEW V_JOINEMP
+AS SELECT EMP_ID, EMP_NAME, DEPT_TITLE
+     FROM EMPLOYEE
+     JOIN DEPARTMENT ON (DEPT_CODE = DEPT_ID);
+     
+SELECT * FROM V_JOINEMP;
+
+-- 뷰 정의 시 JOIN을 사용한 경우 INSERT/UPDATE 시 에러 발생
+INSERT INTO V_JOINEMP VALUES(888, '조세오', '인사관리부');
+-- ORA-01776: cannot modify more than one base table through a join view
+
+UPDATE V_JOINEMP
+SET DEPT_TITLE = '인사관리부'
+WHERE EMP_ID = 219; 
+
+-- 단 DELETE는 가능
+COMMIT;
+
+DELETE FROM V_JOINEMP
+WHERE EMP_ID = 219;
+
+SELECT * FROM V_JOINEMP;
+SELECT * FROM EMPLOYEE;
+SELECT * FROM DEPARTMENT;
+
+ROLLBACK;
+
+--------------------------------------------------------------------------------
 
 
 
