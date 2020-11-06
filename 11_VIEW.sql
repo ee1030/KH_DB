@@ -273,6 +273,72 @@ ROLLBACK;
 
 --------------------------------------------------------------------------------
 
+/* 3. VIEW의 구조
+
+- 뷰 정의 시 사용한 SELECT문이 TEXT라는 컬럼에 저장되어 있으며
+  뷰가 호출되는 경우 TEXT컬럼에 기록된 SELECT문을 다시 실행하여
+  그 결과를 보여주는 구조다.
+
+*/
+
+-- USER_VIEWS : 사용자 정의 뷰를 확인하는 딕셔너리 뷰
+SELECT * FROM USER_VIEWS; 
+
+SELECT * FROM V_EMPLOYEE;
+
+SELECT EMP_ID, EMP_NAME, DEPT_TITLE, NATIONAL_NAME
+FROM EMPLOYEE
+LEFT JOIN DEPARTMENT ON(DEPT_CODE = DEPT_ID)
+LEFT JOIN LOCATION ON(LOCATION_ID = LOCAL_CODE)
+LEFT JOIN NATIONAL USING(NATIONAL_CODE);
+
+--------------------------------------------------------------------------------
+
+/* 4. VIEW 옵션
+
+    [작성법]
+    CREATE [OR REPLACE] [FORCE|NOFORCE] VIEW 뷰이름[(별칭[, 별칭...])]
+    AS 서브쿼리
+    [WITH CHECK OPTION]
+    [WITH READ ONLY]
+    
+    WITH CHECK OPTION : 옵션을 설정한 컬럼 값을 수정 불가능 하게 만드는 옵션.
+    WITH READ ONLY : 뷰를 읽기 전용으로 사용하는 옵션.(SELECT만 가능)
+    
+*/
+CREATE VIEW V_EMP_JOB
+AS
+SELECT EMP_ID 사번, EMP_NAME 이름, JOB_NAME 직급명,
+    DECODE(SUBSTR(EMP_NO, 8, 1), '1', '남', '2', '여') 성별
+FROM EMPLOYEE
+NATURAL JOIN JOB;
+-- ORA-00998: must name this expression with a column alias
+
+SELECT * FROM V_EMP_JOB;
+
+
+CREATE OR REPLACE VIEW V_EMP_JOB(사번, 이름, 직급명, 성별)
+AS
+SELECT EMP_ID, EMP_NAME, JOB_NAME,
+    DECODE(SUBSTR(EMP_NO, 8, 1), '1', '남', '2', '여') 
+FROM EMPLOYEE
+NATURAL JOIN JOB;
+
+--------------------------------------------------------------------------------
+
+-- FORCE / NOFORCE(기본값)
+-- VIEW 생성 시 사용되는 서브쿼리의 베이스 테이블이 존재하지 않아도
+-- VIEW를 생성할 수 있다/없다.
+
+-- NOFORCE가 기본값
+CREATE OR REPLACE FORCE VIEW V_EMP
+AS
+SELECT TCODE, TNAME, TCONTENT
+FROM TT;
+-- 경고: 컴파일 오류와 함께 뷰가 생성되었습니다.
+
+SELECT * FROM V_EMP;
+
 
 
 
