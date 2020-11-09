@@ -95,18 +95,120 @@ BEGIN
 END;
 /
 
+-- 인덱스 활용 X
+SELECT * FROM BOARD
+WHERE BOARD_TITLE = '500000번째 게시글'; -- 1.551초
+
+-- 인덱스 활용 O
+SELECT * FROM BOARD
+WHERE BOARD_NO = 500000; -- 0.012초
+
+--------------------------------------------------------------------------------
+
+/* 인덱스 종류
+
+    1. 고유 인덱스(UNIQUE INDEX)
+    2. 비고유 인덱스(NONUNIQUE INDEX)
+    
+    3. 단일 인덱스(SINGLE INDEX)
+        -> 한개의 컬럼으로 구성된 인덱스
+        
+    4. 결합 인덱스(COMPOSITE INDEX)
+        -> 두개 이상의 컬럼으로 구성된 인덱스
+        
+    5. 함수기반 인덱스(FUNCTION BASED INDEX)
+        -> SELECT절이나 WHERE절에 작성된 산술 또는 함수식에 부여하는 인덱스
+*/
+
+-- 1. 고유 인덱스(UNIQUE INDEX)
+/*
+    - 고유 인덱스가 설정된 컬럼은 중복값 포함 불가.(UNIQUE 제약조건 상태)
+        --> 중복 값이 이미 포함된 컬럼에는 고유 인덱스 생성 불가
+        
+    - 테이블 생성 시 또는 제약조건 추가 SQL에서
+      PRIMARY KEY, UNIQUE 제약 조건이 설정되는 경우
+      별도 INDEX가 컬럼에 없다면 자동으로 INDEX가 생성 됨.
+      
+      * PK를 이용하여 검색하는 경우 성능 향상에 큰 효과가 있음.
+*/
+
+-- BOARD 테이블의 BOARD_TITLE 컬럼에 고유 인덱스 생성
+CREATE UNIQUE INDEX IDX_BOARD_TITLE
+ON BOARD(BOARD_TITLE);
+
+-- 사용자가 생성한 인덱스 조회
+SELECT INDEX_NAME, TABLE_NAME, UNIQUENESS
+FROM USER_INDEXES
+WHERE TABLE_NAME = 'BOARD';
+
+
+SELECT * FROM BOARD
+WHERE BOARD_TITLE = '500000번째 게시글';
+
+-- 고유 인덱스 지정으로 인해 BOARD_TITLE 컬럼에 UNIQUE 제약 조건이 생김.
+INSERT INTO BOARD
+VALUES(SEQ_BNO.NEXTVAL, '500000번째 게시글',
+        '500000번째 게시글의 내용입니다.',
+        DEFAULT, DEFAULT, DEFAULT, DEFAULT,  1,
+        50, 1);
+-- ORA-00001: unique constraint (KH.IDX_BOARD_TITLE) violated
+
+-- 인덱스 삭제
+DROP INDEX IDX_BOARD_TITLE;
+
+-- 2. 비고유 인덱스(NONUNIQUE INDEX)
+-- 컬럼에 중복값이 있지만 빈번하게 조회되는 컬럼을 대상으로 생성
+-- 주로 조회 성능 향상을 위해 사용.
+
+CREATE INDEX IDX_BAORD_TITLE_NU
+ON BOARD(BOARD_TITLE);
+
+SELECT * FROM BOARD
+WHERE BOARD_TITLE = '500000번째 게시글';
+
+CREATE INDEX IDX_BOARD_CATEGORY
+ON BOARD(BOARD_CATEGORY);
+
+SELECT * FROM BOARD
+WHERE BOARD_CATEGORY = 10;
+
+-- 인덱스 재구성(INDEX REBUILD)
+
+-- DML작업(특히 DELETE)명령을 수행한 경우,
+-- 해당 인덱스 내에서 엔트리가 논리적으로만 제거되고
+-- 실제 엔트리는 그냥 남아있게 된다.
+-- 인덱스가 필요 없는 공간을 차지하고 있기 때문에
+-- 인덱스를 재 생성할 필요가 있다.
+ALTER INDEX IDX_BOARD_TITLE_NU REBUILD;
+
+-- 인덱스 삭제
+DROP INDEX IDX_BOARD_TITLE_NU;
+
+
+-- 따라서 인덱스는 4만개 이상정도의 데이터에서 효율적이고 
+-- 반대로 적은 데이터의 양에서는 오히려 비효율적이다. 
+-- DML을 많이 실행하지 않은 단지 조회목적의 테이블에서는 효율적이지만 
+-- DML을 실행하면 다시 인덱스들을 조정해야되는 시간이 더 걸린다. --> 비효율적
 
 
 
+/* 인덱스 재구성(INDEX REBUILD) 추가 설명
 
-
-
-
-
-
-
-
-
+    테이블에 데이터가 추가, 수정, 삭제(DML)이 일어나면 
+    해당 테이블에 존재하는 인덱스에도 추가, 수정, 삭제가 일어남
+    
+    그런데 DML 명령을 수행하면 트리의 불균형이 나타나게 됨
+        - INSERT : 이진트리에 공간이 없으면 필요한 위치에 새로운 공간이 추가되고
+                   저장된 값들이 다시 정렬됨 
+                   -> 새로운 공간 추가 시 이진트리 한쪽으로만 추가되어 불균형 발생 가능
+                   
+        - DELETE : 데이터가 삭제되면, 삭제된 데이터와 연결된 인덱스에서도 저장된 데이터가 논리적으로만 삭제되고
+                   데이터가 저장되어 있던 물리적 공간은 계속 남아있게됨 
+                   -> 저장 공간 낭비
+                   
+        - UPDATE : INSERT와 DELETE가 동시에 수행됨
+            
+*/    
 
 
 
