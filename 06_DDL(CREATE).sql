@@ -28,7 +28,6 @@
         컬럼명 데이터타입(크기 | 자리수),
         ...
       );
-    
 */
 
 -- CHAR : 고정길이 문자 자료형 (2000BYTE)
@@ -147,7 +146,7 @@ SELECT * FROM MEMBER2;
     - NOT NULL
     - UNIQUE
     - CHECK
-    - FOERIGN KEY
+    - FOREIGN KEY
 */
 
 -- 제약 조건 확인 방법
