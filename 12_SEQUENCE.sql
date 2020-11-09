@@ -95,6 +95,38 @@ VALUES(SEQ_EID.NEXTVAL, '홍길순', '001109-2234567', 'hong-gs@kh.or.kr',
 SELECT * FROM EMPLOYEE
 WHERE EMP_NAME = '홍길순';
 
+--------------------------------------------------------------------------------
+
+/*3. 시퀀스 변경
+    [작성법]
+    ALTER SEQUENCE 시퀀스명
+    [INCREMENT BY 정수] -- 다음 값에 대한 증가치, 생략시 기본 값 1
+    [MAXVALUE 정수 | NOMAXVALUE(기본값)]
+    [MINVALUE 정수 | NOMINVALUE(기본값)]
+    [CYCLE | NOCYCLE(기본값)]
+    [CACHE 바이트크기 | NOCACHE];
+    
+    --> START WITH는 변경 불가
+    
+    * 만약 START WITH를 변경하고 싶다면
+    
+        DROP SEQUENCE 시퀀스명; -- 삭제진행 후
+        
+        CREATE SEQUENCE 시퀀스명; -- 다시 생성
+*/
+
+ALTER SEQUENCE SEQ_EMP_ID
+INCREMENT BY 10
+MAXVALUE 400
+MINVALUE 200
+CYCLE;
+
+SELECT SEQ_EMP_ID.CURRVAL FROM DUAL;
+SELECT SEQ_EMP_ID.NEXTVAL FROM DUAL;
+
+
+
+
 
 
 
